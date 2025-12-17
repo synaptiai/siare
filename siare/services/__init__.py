@@ -7,19 +7,20 @@ from siare.services.evaluation_service import EvaluationService
 from siare.services.execution_engine import ExecutionEngine
 from siare.services.gene_pool import GenePool
 from siare.services.llm_cache import LLMCache
-from siare.services.llm_provider import LLMProvider
+from siare.services.llm_provider import LLMProvider, LLMProviderFactory
 from siare.services.qd_grid import QDGridManager
 from siare.services.scheduler import EvolutionScheduler
 
 __all__ = [
+    "CircuitBreaker",
+    "ConfigStore",
     "DirectorService",
+    "EvaluationService",
+    "EvolutionScheduler",
     "ExecutionEngine",
     "GenePool",
-    "QDGridManager",
-    "EvolutionScheduler",
-    "EvaluationService",
-    "ConfigStore",
-    "LLMProvider",
     "LLMCache",
-    "CircuitBreaker",
+    "LLMProvider",
+    "LLMProviderFactory",
+    "QDGridManager",
 ]
