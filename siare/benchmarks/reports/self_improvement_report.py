@@ -12,7 +12,6 @@ from html import escape as html_escape
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from siare.benchmarks.self_improvement_benchmark import SelfImprovementResult
 
@@ -273,7 +272,7 @@ All comparisons use Wilcoxon signed-rank test (paired samples on same queries).
         lines.append("```")
         lines.append("-" * 45)
 
-        for gen, best in zip(generations, best_quality):
+        for gen, best in zip(generations, best_quality, strict=False):
             bar_len = int((best / max_quality) * 30) if max_quality > 0 else 0
             bar = "█" * bar_len
             lines.append(f"Gen {gen:2d} | {bar} {best:.3f}")
@@ -302,7 +301,7 @@ All comparisons use Wilcoxon signed-rank test (paired samples on same queries).
                 lines.append(sep)
 
                 # Build table rows
-                for gen, metrics in zip(generations, metrics_by_gen):
+                for gen, metrics in zip(generations, metrics_by_gen, strict=False):
                     row = f"| {gen:3d} |"
                     for name in metric_names:
                         value = metrics.get(name, 0.0)

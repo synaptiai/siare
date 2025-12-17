@@ -4,7 +4,6 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any, Optional
 
-
 if TYPE_CHECKING:
     from siare.services.hallucination.types import ClaimVerification
     from siare.services.llm_provider import LLMProvider

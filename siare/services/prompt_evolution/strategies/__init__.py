@@ -23,7 +23,6 @@ from siare.services.prompt_evolution.strategies.textgrad import (
     TextualGradient,
 )
 
-
 __all__ = [
     "BasePromptOptimizationStrategy",
     "EvoPromptStrategy",

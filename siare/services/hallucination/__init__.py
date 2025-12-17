@@ -25,7 +25,6 @@ from siare.services.hallucination.types import (
     GroundednessResult,
 )
 
-
 __all__ = [
     "RAGAS_AVAILABLE",
     "CitationChecker",

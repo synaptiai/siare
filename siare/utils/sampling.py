@@ -1,11 +1,10 @@
 """Sampling utilities for quality-weighted selection"""
 
-from collections.abc import Sequence
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable, Sequence
+from typing import Any, TypeVar
 
 import numpy as np
 from numpy.typing import NDArray
-
 
 T = TypeVar("T")
 

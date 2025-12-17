@@ -23,7 +23,6 @@ from siare.core.models import (
 from siare.services.execution_engine import ExecutionTrace
 from siare.services.prompt_evolution.parser import MarkdownSectionParser
 
-
 if TYPE_CHECKING:
     from siare.services.llm_provider import LLMProvider
 
@@ -109,8 +108,8 @@ class BaseLLMCritic(ABC):
         traces: list[ExecutionTrace],
         sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
-        evaluations: Optional[list[EvaluationVector]] = None,
-        artifacts: Optional[EvaluationArtifacts] = None,
+        evaluations: list[EvaluationVector] | None = None,
+        artifacts: EvaluationArtifacts | None = None,
     ) -> list[PromptFeedback]:
         """
         Extract structured feedback from execution traces.
@@ -152,7 +151,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
             model: Model to use for classification
             temperature: LLM temperature (lower = more deterministic)
         """
-        self.llm_provider: Optional[LLMProvider] = llm_provider
+        self.llm_provider: LLMProvider | None = llm_provider
         self.model = model
         self.temperature = temperature
         self.parser = MarkdownSectionParser()
@@ -162,8 +161,8 @@ class TraceFeedbackExtractor(BaseLLMCritic):
         traces: list[ExecutionTrace],
         sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
-        evaluations: Optional[list[EvaluationVector]] = None,
-        artifacts: Optional[EvaluationArtifacts] = None,
+        evaluations: list[EvaluationVector] | None = None,
+        artifacts: EvaluationArtifacts | None = None,
     ) -> list[PromptFeedback]:
         """
         Extract structured feedback from execution traces.
@@ -221,7 +220,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
     def _identify_failing_nodes(
         self,
         traces: list[ExecutionTrace],
-        evaluations: Optional[list[EvaluationVector]],
+        evaluations: list[EvaluationVector] | None,
     ) -> list[dict[str, Any]]:
         """
         Identify nodes that failed or performed poorly.
@@ -343,7 +342,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
         # Use LLM for classification
         return self._llm_classify_failure(node_info, prompt_content)
 
-    def _heuristic_classify_failure(  # noqa: PLR0911
+    def _heuristic_classify_failure(
         self, node_info: dict[str, Any]
     ) -> dict[str, Any]:
         """
@@ -455,7 +454,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
             # Parse response
             return self._parse_classification_response(response.content)
 
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning(f"LLM classification failed: {e}, falling back to heuristics")
             return self._heuristic_classify_failure(node_info)
 
@@ -640,7 +639,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
 
         return additional_feedback
 
-    def _map_failure_mode_string(self, failure_mode: str) -> Optional[FailurePattern]:
+    def _map_failure_mode_string(self, failure_mode: str) -> FailurePattern | None:
         """Map a failure mode string to FailurePattern enum"""
         failure_lower = failure_mode.lower()
 

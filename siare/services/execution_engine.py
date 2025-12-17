@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
 from siare.core.models import ProcessConfig, PromptGenome, RoleConfig
 
-
 if TYPE_CHECKING:
     from siare.core.models import FeedbackArtifact, FeedbackInjectionConfig
     from siare.services.prompt_evolution.feedback_injector import FeedbackInjector
@@ -24,7 +23,6 @@ from siare.services.circuit_breaker import (
 )
 from siare.services.llm_provider import LLMMessage, LLMProvider, LLMResponse
 from siare.services.retry_handler import RetryExhausted, RetryHandler
-
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +59,7 @@ def timeout(seconds: int):
         yield
         return
 
-    def timeout_handler(signum: int, frame: Optional[FrameType]) -> None:  # noqa: ARG001
+    def timeout_handler(signum: int, frame: FrameType | None) -> None:  # noqa: ARG001
         # signum and frame are required by signal.signal() callback signature
         raise ExecutionTimeoutError(f"Operation timed out after {seconds} seconds")
 
@@ -85,7 +83,7 @@ class ExecutionTrace:
         self.sop_id = sop_id
         self.sop_version = sop_version
         self.start_time = datetime.now(timezone.utc)
-        self.end_time: Optional[datetime] = None
+        self.end_time: datetime | None = None
 
         # Execution trace
         self.node_executions: list[dict[str, Any]] = []
@@ -215,13 +213,13 @@ class ExecutionEngine:
 
     def __init__(
         self,
-        llm_provider: Optional[LLMProvider] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
-        retry_handler: Optional[RetryHandler] = None,
-        circuit_breaker_registry: Optional[CircuitBreakerRegistry] = None,
+        llm_provider: LLMProvider | None = None,
+        tool_adapters: dict[str, Any] | None = None,
+        retry_handler: RetryHandler | None = None,
+        circuit_breaker_registry: CircuitBreakerRegistry | None = None,
         role_timeout: int = DEFAULT_ROLE_TIMEOUT,
         tool_timeout: int = DEFAULT_TOOL_TIMEOUT,
-        model_fallback_cascade: Optional[list[str]] = None,
+        model_fallback_cascade: list[str] | None = None,
     ):
         """
         Initialize execution engine
@@ -262,9 +260,9 @@ class ExecutionEngine:
         sop: ProcessConfig,
         prompt_genome: PromptGenome,
         task_input: dict[str, Any],
-        run_id: Optional[str] = None,
+        run_id: str | None = None,
         feedback_injector: Optional["FeedbackInjector"] = None,
-        feedback_artifacts: Optional[list["FeedbackArtifact"]] = None,
+        feedback_artifacts: list["FeedbackArtifact"] | None = None,
         feedback_config: Optional["FeedbackInjectionConfig"] = None,
     ) -> ExecutionTrace:
         """
@@ -372,7 +370,7 @@ class ExecutionEngine:
         except KeyError as e:
             trace.add_error("system", f"KeyError: {e!s}")
             trace.finalize("failed", {})
-        except Exception as e:  # noqa: BLE001 - Catch-all for fault tolerance in execution loop
+        except Exception as e:
             trace.add_error("system", str(e))
             trace.finalize("failed", {})
 
@@ -381,7 +379,7 @@ class ExecutionEngine:
     def _should_execute_role(
         self,
         role_id: str,
-        edge_conditions: dict[tuple[str, str], Optional[str]],
+        edge_conditions: dict[tuple[str, str], str | None],
         state: dict[str, Any],
     ) -> bool:
         """
@@ -554,7 +552,7 @@ class ExecutionEngine:
         except SyntaxError as e:
             raise ValueError(f"Condition syntax error: {e!s}") from e
 
-    def _build_graph(self, sop: ProcessConfig) -> tuple[dict[str, list[str]], dict[tuple[str, str], Optional[str]]]:
+    def _build_graph(self, sop: ProcessConfig) -> tuple[dict[str, list[str]], dict[tuple[str, str], str | None]]:
         """
         Build adjacency list representation of graph with edge conditions
 
@@ -564,7 +562,7 @@ class ExecutionEngine:
             - Dict mapping (from_node, to_node) -> condition string (edge conditions)
         """
         graph: dict[str, list[str]] = defaultdict(list)
-        conditions: dict[tuple[str, str], Optional[str]] = {}
+        conditions: dict[tuple[str, str], str | None] = {}
 
         # Add all roles as nodes
         for role in sop.roles:
@@ -684,7 +682,7 @@ class ExecutionEngine:
         sop: ProcessConfig,
         prompt_genome: PromptGenome,
         feedback_injector: Optional["FeedbackInjector"],
-        feedback_artifacts: Optional[list["FeedbackArtifact"]],
+        feedback_artifacts: list["FeedbackArtifact"] | None,
         feedback_config: Optional["FeedbackInjectionConfig"],
     ) -> PromptGenome:
         """Inject feedback into prompts if configured.
@@ -753,7 +751,7 @@ class ExecutionEngine:
             if fallback_model != preferred_model and fallback_model not in models_to_try:
                 models_to_try.append(fallback_model)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for model in models_to_try:
             try:
                 logger.debug(f"Trying model {model} for role {role_id}")
@@ -784,7 +782,7 @@ class ExecutionEngine:
                 )
                 continue
 
-            except Exception as e:  # noqa: BLE001 - Catch-all with logging for model cascade fallback
+            except Exception as e:
                 last_error = e
                 logger.warning(
                     f"Unexpected error with model {model} for role {role_id}: {e}. "
@@ -916,7 +914,7 @@ class ExecutionEngine:
                     )
                     outputs[f"{tool_ref}_result"] = tool_output
 
-                except Exception as e:  # noqa: BLE001 - Graceful degradation for tool failures
+                except Exception as e:
                     # Tool invocation failed - log but continue (graceful degradation)
                     logger.warning(
                         f"Tool {tool_ref} failed for role {role_config.id}: {e}. Continuing..."
@@ -1111,7 +1109,7 @@ class ExecutionEngine:
         inputs: dict[str, Any],
         trace: ExecutionTrace,
         role_id: str,
-        role_params: Optional[dict[str, Any]] = None,
+        role_params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Invoke a tool adapter with error handling and timeout protection.

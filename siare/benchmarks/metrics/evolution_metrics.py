@@ -4,8 +4,7 @@ These metrics are designed to work with SIARE's EvaluationService and
 evolution loop, providing accuracy and quality metrics for RAG benchmarks.
 """
 import re
-from typing import TYPE_CHECKING, Any, Optional
-
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from siare.core.models import ProcessConfig, PromptGenome, SOPGene
@@ -368,7 +367,7 @@ class EvolutionMetrics:
         queries: list[dict[str, Any]],
         llm_provider: "LLMProvider",
         n_runs: int = 10,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> dict[str, float]:
         """Measure stability by running same queries multiple times.
 
@@ -520,7 +519,7 @@ class EvolutionMetrics:
                 distance += len(tools1.symmetric_difference(tools2))
 
         # Compare graph edges
-        def edge_key(edge: Any) -> tuple[str, str, Optional[str]]:
+        def edge_key(edge: Any) -> tuple[str, str, str | None]:
             """Create comparable key for graph edge."""
             from_val = edge.from_ if isinstance(edge.from_, str) else tuple(edge.from_)
             return (str(from_val), edge.to, edge.condition)

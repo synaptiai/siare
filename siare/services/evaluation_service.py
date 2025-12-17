@@ -1,7 +1,8 @@
 """Evaluation Service - Runs metrics on execution traces"""
 
 import logging
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Optional, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, cast
 
 from siare.core.models import (
     AggregatedMetric,
@@ -20,7 +21,6 @@ from siare.utils.multiple_comparison import (
     recommend_correction_method,
 )
 from siare.utils.statistics import aggregate_with_statistics, compare_sop_performance
-
 
 if TYPE_CHECKING:
     from siare.services.llm_provider import LLMProvider
@@ -213,7 +213,7 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
         self,
         trace: ExecutionTrace,
         metrics: list[MetricConfig],
-        task_data: Optional[dict[str, Any]] = None,
+        task_data: dict[str, Any] | None = None,
         prompt_genome_id: str = "default",
         prompt_genome_version: str = "1.0.0",
     ) -> EvaluationVector:
@@ -272,7 +272,7 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
         self,
         metric_config: MetricConfig,
         trace: ExecutionTrace,
-        task_data: Optional[dict[str, Any]],
+        task_data: dict[str, Any] | None,
         artifacts: EvaluationArtifacts,
     ) -> MetricResult:
         """Evaluate a single metric"""
@@ -296,7 +296,7 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
         metric_config: MetricConfig,
         trace: ExecutionTrace,
         artifacts: EvaluationArtifacts,
-        task_data: Optional[dict[str, Any]] = None,
+        task_data: dict[str, Any] | None = None,
     ) -> MetricResult:
         """
         Evaluate using LLM judge.
@@ -411,7 +411,7 @@ Score 0.0-1.0. Respond in JSON format: {{"score": X.X, "reasoning": "..."}}"""
         self,
         metric_config: MetricConfig,
         trace: ExecutionTrace,
-        task_data: Optional[dict[str, Any]],
+        task_data: dict[str, Any] | None,
     ) -> MetricResult:
         """Evaluate using programmatic function"""
 
@@ -668,7 +668,7 @@ Score 0.0-1.0. Respond in JSON format: {{"score": X.X, "reasoning": "..."}}"""
         paired: bool = False,
         use_parametric: bool = False,
         apply_correction: bool = True,
-        correction_method: Optional[CorrectionMethod] = None,
+        correction_method: CorrectionMethod | None = None,
     ) -> dict[str, Any]:
         """
         Statistically compare performance of two SOPs
@@ -714,7 +714,7 @@ Score 0.0-1.0. Respond in JSON format: {{"score": X.X, "reasoning": "..."}}"""
         )
 
         # Apply multiple comparison correction if requested
-        applied_correction: Optional[CorrectionMethod] = None
+        applied_correction: CorrectionMethod | None = None
         if apply_correction and len(test_results) > 1:
             applied_correction = correction_method or recommend_correction_method(
                 len(test_results)

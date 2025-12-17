@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Optional
 
-
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
     from siare.core.models import EvaluationVector, ProcessConfig, PromptGenome
@@ -36,7 +35,7 @@ class SampleResult:
     ground_truth: str
     metrics: dict[str, float] = field(default_factory=_empty_float_dict)
     latency_ms: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
     # Evolution integration fields
     evaluation_vector: Optional["EvaluationVector"] = None
     execution_trace: Optional["ExecutionTrace"] = None
@@ -143,8 +142,8 @@ class BenchmarkRunner:
         sop: Optional["ProcessConfig"] = None,
         genome: Optional["PromptGenome"] = None,
         llm_provider: Optional["LLMProvider"] = None,
-        model_fallback_cascade: Optional[list[str]] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        model_fallback_cascade: list[str] | None = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the benchmark runner.
 
@@ -166,8 +165,8 @@ class BenchmarkRunner:
     def run(
         self,
         dataset: "BenchmarkDataset",
-        max_samples: Optional[int] = None,
-        metrics: Optional[list[str]] = None,
+        max_samples: int | None = None,
+        metrics: list[str] | None = None,
     ) -> BenchmarkResults:
         """Run benchmark on dataset.
 
@@ -226,8 +225,8 @@ class BenchmarkRunner:
     def run_parallel(
         self,
         dataset: "BenchmarkDataset",
-        max_samples: Optional[int] = None,
-        metrics: Optional[list[str]] = None,
+        max_samples: int | None = None,
+        metrics: list[str] | None = None,
         max_workers: int = 1,
     ) -> BenchmarkResults:
         """Run benchmark on dataset with parallel sample processing.
@@ -400,7 +399,7 @@ class BenchmarkRunner:
         dataset: "BenchmarkDataset",
         evaluation_service: "EvaluationService",
         metric_configs: list[Any],
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
     ) -> BenchmarkResults:
         """Run benchmark with full EvaluationService integration.
 
@@ -631,7 +630,7 @@ class BenchmarkRunner:
         dataset: "BenchmarkDataset",
         evaluation_service: "EvaluationService",
         metric_configs: list[Any],
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
         max_workers: int = 1,
     ) -> BenchmarkResults:
         """Run benchmark with parallel sample processing.

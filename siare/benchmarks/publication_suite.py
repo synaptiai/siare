@@ -28,7 +28,6 @@ from siare.utils.statistics import (
     wilcoxon_signed_rank_test,
 )
 
-
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset
     from siare.core.models import ProcessConfig, PromptGenome, SOPGene
@@ -261,8 +260,8 @@ class PublicationBenchmarkResult:
     evolved_sop_results: dict[str, Any] = field(default_factory=_empty_dict_str_any)
     baseline_comparisons: dict[str, dict[str, Any]] = field(default_factory=_empty_dict_str_any)
     ablation_studies: dict[str, AblationResult] = field(default_factory=_empty_dict_str_ablation)
-    learning_curves: Optional[LearningCurveData] = None
-    power_analysis: Optional[PowerAnalysisResult] = None
+    learning_curves: LearningCurveData | None = None
+    power_analysis: PowerAnalysisResult | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to full dictionary representation."""
@@ -336,8 +335,8 @@ class PublicationBenchmark:
         golden_dataset: "BenchmarkDataset",
         llm_provider: "LLMProvider",
         public_dataset: Optional["BenchmarkDataset"] = None,
-        metrics: Optional[list[str]] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        metrics: list[str] | None = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize publication benchmark.
 
@@ -363,7 +362,7 @@ class PublicationBenchmark:
         ablations: dict[str, tuple["ProcessConfig", "PromptGenome"]],
         n_runs: int = 30,
         confidence_level: float = 0.99,
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
         random_seed: int = 42,
     ) -> PublicationBenchmarkResult:
         """Run complete publication-grade benchmark suite.

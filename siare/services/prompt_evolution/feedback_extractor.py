@@ -13,7 +13,6 @@ from siare.core.models import (
     MetricSource,
 )
 
-
 logger = logging.getLogger(__name__)
 
 

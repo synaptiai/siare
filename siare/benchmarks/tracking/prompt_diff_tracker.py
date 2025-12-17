@@ -17,7 +17,6 @@ from siare.utils.diff import (
     has_changes,
 )
 
-
 if TYPE_CHECKING:
     from siare.core.models import PromptGenome
 

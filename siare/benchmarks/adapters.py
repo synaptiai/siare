@@ -1,6 +1,5 @@
 """Adapters for converting benchmark datasets to evolution formats."""
 from datetime import datetime, timezone
-from typing import Optional
 
 from siare.benchmarks.base import BenchmarkDataset
 from siare.core.models import TaskSet
@@ -9,8 +8,8 @@ from siare.core.models import TaskSet
 def benchmark_to_taskset(
     dataset: BenchmarkDataset,
     version: str = "1.0.0",
-    domain: Optional[str] = None,
-    description: Optional[str] = None,
+    domain: str | None = None,
+    description: str | None = None,
 ) -> TaskSet:
     """Convert a BenchmarkDataset to a TaskSet for evolution.
 

@@ -1,7 +1,7 @@
 """Base Tool Adapter - Plugin system for tools"""
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class ToolAdapter(ABC):
@@ -83,9 +83,9 @@ class ToolAdapter(ABC):
 
     def __exit__(
         self,
-        exc_type: Optional[type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[Any],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any | None,
     ) -> None:
         """Context manager exit"""
         self.cleanup()

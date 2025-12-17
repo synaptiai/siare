@@ -11,7 +11,7 @@ This module provides all baseline strategies for rigorous comparison.
 
 import random
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from siare.benchmarks.sops.evolvable_rag import (
     EVOLVABLE_PARAM_BOUNDS,
@@ -23,7 +23,6 @@ from siare.benchmarks.sops.simple_qa import (
     create_benchmark_sop,
 )
 from siare.core.models import ProcessConfig, PromptGenome
-
 
 # Static baseline configurations
 STATIC_BASELINE_CONFIGS: dict[str, dict[str, Any]] = {
@@ -117,8 +116,8 @@ class RandomSearchBaseline:
     def __init__(
         self,
         n_samples: int = 20,
-        seed: Optional[int] = None,
-        param_bounds: Optional[dict[str, dict[str, Any]]] = None,
+        seed: int | None = None,
+        param_bounds: dict[str, dict[str, Any]] | None = None,
     ) -> None:
         """Initialize random search baseline.
 

@@ -7,7 +7,7 @@ learning progress and detect convergence.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -85,8 +85,8 @@ class LearningCurveTracker:
         self,
         generation: int,
         quality_scores: list[float],
-        metric_values: Optional[dict[str, float]] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        metric_values: dict[str, float] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> LearningCurvePoint:
         """Add a generation's data to the learning curve.
 

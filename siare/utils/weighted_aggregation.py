@@ -1,7 +1,7 @@
 """Weighted task aggregation utilities for heterogeneous task sets"""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -12,7 +12,6 @@ from siare.core.constants import (
     WEIGHT_SUM_UPPER_BOUND,
 )
 from siare.core.models import AggregatedMetric, AggregationMethod, EvaluationVector
-
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +126,7 @@ def _aggregate_with_weights(
     weighted_median = float(sorted_scores[median_idx])
 
     # Bootstrap CI for weighted mean
-    ci: Optional[tuple[float, float]] = None
+    ci: tuple[float, float] | None = None
     if len(scores) >= MIN_SAMPLES_VARIANCE:
         try:
             # Bootstrap with weights (resample tasks with replacement)
@@ -144,7 +143,7 @@ def _aggregate_with_weights(
             upper = float(np.percentile(bootstrap_samples, 97.5))
             ci = (lower, upper)
 
-        except Exception as e:  # noqa: BLE001 - Catch-all with logging for numerical stability
+        except Exception as e:
             logger.warning(f"Failed to compute weighted CI for {metric_id}: {e}")
 
     return AggregatedMetric(

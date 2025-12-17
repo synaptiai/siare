@@ -6,11 +6,11 @@ import hashlib
 import json
 import logging
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +70,10 @@ class EvolutionScheduler:
         execution_engine: ExecutionEngine,
         evaluation_service: EvaluationService,
         director_service: DirectorService,
-        checkpoint_dir: Optional[str] = None,
+        checkpoint_dir: str | None = None,
         checkpoint_interval: int = DEFAULT_CHECKPOINT_INTERVAL,
-        retry_handler: Optional[RetryHandler] = None,
-        convergence_config: Optional[ConvergenceConfig] = None,
+        retry_handler: RetryHandler | None = None,
+        convergence_config: ConvergenceConfig | None = None,
         parallel_offspring: bool = False,
     ):
         """
@@ -113,12 +113,12 @@ class EvolutionScheduler:
             try:
                 self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
                 logger.info(f"Checkpoint directory: {self.checkpoint_dir}")
-            except Exception as e:  # noqa: BLE001 - Graceful degradation if checkpoint dir unavailable
+            except Exception as e:
                 logger.warning(f"Failed to create checkpoint directory: {e}")
                 self.checkpoint_dir = None
 
         # Current evolution job
-        self.current_job: Optional[EvolutionJob] = None
+        self.current_job: EvolutionJob | None = None
 
         # Job tracking
         self.generation_history: list[dict[str, Any]] = []
@@ -208,7 +208,7 @@ class EvolutionScheduler:
         self.generation_history = checkpoint_data.get("generation_history", [])
         self.best_quality_history = checkpoint_data.get("best_quality_history", [])
 
-    def save_checkpoint(self) -> Optional[Path]:
+    def save_checkpoint(self) -> Path | None:
         """
         Save current job state to checkpoint
 
@@ -254,14 +254,14 @@ class EvolutionScheduler:
     @classmethod
     def load_checkpoint(
         cls,
-        checkpoint_path: Union[str, Path],
+        checkpoint_path: str | Path,
         config_store: ConfigStore,
         gene_pool: GenePool,
         qd_grid: QDGridManager,
         execution_engine: ExecutionEngine,
         evaluation_service: EvaluationService,
         director_service: DirectorService,
-        retry_handler: Optional[RetryHandler] = None,
+        retry_handler: RetryHandler | None = None,
     ) -> EvolutionScheduler:
         """
         Load scheduler from checkpoint
@@ -321,7 +321,7 @@ class EvolutionScheduler:
             logger.exception(f"Failed to load checkpoint: {checkpoint_path}")
             raise RuntimeError(f"Checkpoint load failed: {e}") from e
 
-    def resume_from_checkpoint(self, checkpoint_path: Union[str, Path]) -> None:
+    def resume_from_checkpoint(self, checkpoint_path: str | Path) -> None:
         """
         Resume current scheduler from checkpoint
 
@@ -666,7 +666,7 @@ class EvolutionScheduler:
         if self.checkpoint_dir and job.currentGeneration % self.checkpoint_interval == 0:
             try:
                 self.save_checkpoint()
-            except Exception as e:  # noqa: BLE001 - Graceful degradation for non-critical checkpoint
+            except Exception as e:
                 logger.warning(f"Checkpoint save failed (non-fatal): {e}")
 
         # Check phase completion
@@ -679,7 +679,7 @@ class EvolutionScheduler:
             if self.checkpoint_dir:
                 try:
                     self.save_checkpoint()
-                except Exception as e:  # noqa: BLE001 - Graceful degradation for non-critical checkpoint
+                except Exception as e:
                     logger.warning(f"Final checkpoint save failed (non-fatal): {e}")
 
     def _bootstrap_population(self, job: EvolutionJob) -> None:
@@ -821,7 +821,7 @@ class EvolutionScheduler:
         parent_version: str,
         mutation_types: list[MutationType],
         constraints: Any,
-    ) -> Optional[tuple[SOPGene, dict[str, Any]]]:
+    ) -> tuple[SOPGene, dict[str, Any]] | None:
         """
         Generate offspring via mutation.
 
@@ -918,7 +918,7 @@ class EvolutionScheduler:
         parent_sop: ProcessConfig,
         parent_genome: PromptGenome,
         new_sop: ProcessConfig,
-        new_genome: Optional[PromptGenome],
+        new_genome: PromptGenome | None,
         mutation_type: MutationType,
     ) -> dict[str, Any]:
         """
@@ -1163,8 +1163,8 @@ class EvolutionScheduler:
         return evaluations
 
     def _extract_task_weights(
-        self, task_set: Optional[TaskSet]
-    ) -> Optional[list[float]]:
+        self, task_set: TaskSet | None
+    ) -> list[float] | None:
         """
         Extract and normalize task weights from a TaskSet.
 
@@ -1195,7 +1195,7 @@ class EvolutionScheduler:
         evaluations: list[EvaluationVector],
         metric_ids: list[str],
         weights: dict[str, float],
-        task_weights: Optional[list[float]] = None,
+        task_weights: list[float] | None = None,
     ) -> dict[str, AggregatedMetric]:
         """
         Aggregate metrics across evaluations with statistical rigor
@@ -1297,11 +1297,11 @@ class EvolutionScheduler:
         weighted_se = weighted_std / (total_samples**0.5) if total_samples > 0 else 0.0
 
         # Bootstrap CI for weighted aggregate
-        ci: Optional[tuple[float, float]] = None
+        ci: tuple[float, float] | None = None
         if raw_values and len(raw_values) >= MIN_PARENTS_FOR_CROSSOVER:
             try:
                 ci = bootstrap_confidence_interval(raw_values, confidence_level=0.95)
-            except Exception as e:  # noqa: BLE001 - Graceful degradation for non-critical statistic
+            except Exception as e:
                 logger.warning(f"Failed to compute CI for weighted_aggregate: {e}")
 
         return AggregatedMetric(
@@ -1437,7 +1437,7 @@ class EvolutionScheduler:
         self,
         job: EvolutionJob,
         verbose: bool = True,
-        on_generation_complete: Optional[Callable[[int, dict[str, Any]], None]] = None,
+        on_generation_complete: Callable[[int, dict[str, Any]], None] | None = None,
     ) -> EvolutionJob:
         """
         Run evolution job to completion

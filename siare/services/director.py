@@ -4,8 +4,7 @@ import json
 import logging
 import re
 import uuid
-from typing import TYPE_CHECKING, Any, Optional, Union
-
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from siare.core.models import PromptEvolutionResult
@@ -35,7 +34,6 @@ from siare.services.execution_engine import ExecutionEngine
 from siare.services.llm_provider import LLMMessage, LLMProvider
 from siare.services.retry_handler import RetryExhausted, RetryHandler
 
-
 logger = logging.getLogger(__name__)
 
 # Separator for multi-part rationale strings
@@ -56,10 +54,10 @@ class Diagnostician:
     def __init__(
         self,
         llm_provider: LLMProvider,
-        meta_config: Optional[MetaConfig] = None,
+        meta_config: MetaConfig | None = None,
         model: str = "gpt-5",
-        retry_handler: Optional[RetryHandler] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
+        retry_handler: RetryHandler | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
     ):
         """
         Initialize Diagnostician
@@ -256,7 +254,7 @@ Be specific and actionable in your recommendations.
         root_cause = ""
         recommendations: list[str] = []
 
-        current_section: Optional[str] = None
+        current_section: str | None = None
 
         for line in lines:
             line = line.strip()
@@ -338,10 +336,10 @@ class Architect:
     def __init__(
         self,
         llm_provider: LLMProvider,
-        meta_config: Optional[MetaConfig] = None,
+        meta_config: MetaConfig | None = None,
         model: str = "gpt-5",
-        retry_handler: Optional[RetryHandler] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
+        retry_handler: RetryHandler | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
     ):
         """
         Initialize Architect
@@ -370,10 +368,10 @@ class Architect:
         sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
         mutation_types: list[MutationType],
-        constraints: Optional[dict[str, Any]] = None,
+        constraints: dict[str, Any] | None = None,
         prompt_orchestrator: Optional["PromptEvolutionOrchestrator"] = None,
-        traces: Optional[list["ExecutionTrace"]] = None,
-        evaluations: Optional[list["EvaluationVector"]] = None,
+        traces: list["ExecutionTrace"] | None = None,
+        evaluations: list["EvaluationVector"] | None = None,
     ) -> SOPMutation:
         """
         Propose a mutation based on diagnosis
@@ -459,7 +457,7 @@ class Architect:
         sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
         mutation_types: list[MutationType],
-        constraints: Optional[dict[str, Any]],
+        constraints: dict[str, Any] | None,
     ) -> str:
         """Build prompt for mutation proposal"""
 
@@ -542,18 +540,18 @@ Guidelines:
         llm_response: str,
         parent_sop: ProcessConfig,
         parent_genome: PromptGenome,
-        constraints: Optional[dict[str, Any]] = None,
+        constraints: dict[str, Any] | None = None,
     ) -> SOPMutation:
         """Parse LLM response into SOPMutation"""
 
         lines = llm_response.split("\n")
 
         mutation_type = MutationType.PROMPT_CHANGE  # Default
-        target_role: Optional[str] = None
+        target_role: str | None = None
         new_content_parts: list[str] = []
         rationale_parts: list[str] = []
 
-        current_section: Optional[str] = None
+        current_section: str | None = None
 
         for line in lines:
             line_stripped = line.strip()
@@ -619,7 +617,7 @@ Guidelines:
         self,
         old_prompt: str,
         new_prompt: str,
-        constraints: Optional[PromptConstraints],
+        constraints: PromptConstraints | None,
     ) -> None:
         """
         Validate prompt changes against constraints
@@ -648,9 +646,9 @@ Guidelines:
     def _validate_evolution_constraints(
         self,
         mutation_type: MutationType,
-        target_role: Optional[str],
+        target_role: str | None,
         parent_sop: ProcessConfig,
-        constraints: Optional[dict[str, Any]],
+        constraints: dict[str, Any] | None,
     ) -> None:
         """
         Validate mutation against evolution job constraints
@@ -705,11 +703,11 @@ Guidelines:
     def _apply_mutation(
         self,
         mutation_type: MutationType,
-        target_role: Optional[str],
+        target_role: str | None,
         new_content: str,
         parent_sop: ProcessConfig,
         parent_genome: PromptGenome,
-        constraints: Optional[dict[str, Any]] = None,
+        constraints: dict[str, Any] | None = None,
     ) -> tuple[ProcessConfig, PromptGenome]:
         """
         Apply mutation to create new SOP and PromptGenome
@@ -892,14 +890,14 @@ Guidelines:
         """
         lines = llm_content.split("\n")
 
-        role_id: Optional[str] = None
+        role_id: str | None = None
         model = self.model  # Use configured model as default
         tools: list[str] = []
         prompt_content: list[str] = []
         edges_from: list[str] = []
         edges_to: list[str] = []
 
-        current_section: Optional[str] = None
+        current_section: str | None = None
 
         for line in lines:
             line_stripped = line.strip()
@@ -1052,7 +1050,7 @@ Guidelines:
 
         # Parse line-by-line format
         lines = llm_content.split("\n")
-        current_section: Optional[str] = None
+        current_section: str | None = None
 
         for line in lines:
             line_stripped = line.strip()
@@ -1079,14 +1077,14 @@ Guidelines:
 
         return edges_to_add, edges_to_remove
 
-    def _parse_edge_line(self, line: str) -> Optional[GraphEdge]:
+    def _parse_edge_line(self, line: str) -> GraphEdge | None:
         """Parse a single edge line like '- from: role1, to: role2'"""
         # Remove leading dash
         line = line.lstrip("- ").strip()
 
         # Try to parse as key-value pairs
-        from_node: Optional[Union[str, list[str]]] = None
-        to_node: Optional[str] = None
+        from_node: str | list[str] | None = None
+        to_node: str | None = None
 
         # Pattern: from: X, to: Y
         match = re.search(r"from:\s*([a-zA-Z0-9_,-]+).*to:\s*([a-zA-Z0-9_-]+)", line, re.IGNORECASE)
@@ -1106,7 +1104,7 @@ Guidelines:
             return GraphEdge(from_=from_node, to=to_node)
         return None
 
-    def _parse_edge_line_dict(self, line: str) -> Optional[dict[str, Any]]:
+    def _parse_edge_line_dict(self, line: str) -> dict[str, Any] | None:
         """Parse edge line into dict for comparison"""
         edge = self._parse_edge_line(line)
         if edge:
@@ -1128,8 +1126,8 @@ Guidelines:
         from1_key = "from" if "from" in edge1 else "from_"
         from2_key = "from" if "from" in edge2 else "from_"
 
-        from1: Union[str, list[str]] = edge1[from1_key]
-        from2: Union[str, list[str]] = edge2[from2_key]
+        from1: str | list[str] = edge1[from1_key]
+        from2: str | list[str] = edge2[from2_key]
         to1: str = edge1["to"]
         to2: str = edge2["to"]
 
@@ -1208,7 +1206,7 @@ Guidelines:
         node: str,
         valid_ids: set[str],
         id_map: dict[str, str],
-    ) -> Optional[str]:
+    ) -> str | None:
         """Map a single node ID to new ID.
 
         Args:
@@ -1229,10 +1227,10 @@ Guidelines:
 
     def _map_edge_nodes(
         self,
-        from_: Union[str, list[str]],
+        from_: str | list[str],
         valid_ids: set[str],
         id_map: dict[str, str],
-    ) -> Optional[Union[str, list[str]]]:
+    ) -> str | list[str] | None:
         """Map edge source nodes to new IDs.
 
         Args:
@@ -1256,7 +1254,7 @@ Guidelines:
         self,
         source_config: ProcessConfig,
         new_role_ids: set[str],
-        role_id_map: Optional[dict[str, str]] = None,
+        role_id_map: dict[str, str] | None = None,
     ) -> list[GraphEdge]:
         """Reconstruct graph edges for new role set.
 
@@ -1601,15 +1599,15 @@ Guidelines:
     def _crossover_prompt_sections(
         self,
         parser: Any,
-        prompt_a: Optional[RolePrompt],
-        prompt_b: Optional[RolePrompt],
+        prompt_a: RolePrompt | None,
+        prompt_b: RolePrompt | None,
         role_a_id: str,
         role_b_id: str,
         prompt_ref: str,
         coin_flip_threshold: float,
         prompt_section_type: Any,
         random_module: Any,
-    ) -> Optional[RolePrompt]:
+    ) -> RolePrompt | None:
         """Crossover prompt sections between two prompts.
 
         Args:
@@ -1824,7 +1822,7 @@ Guidelines:
         edge: GraphEdge,
         new_roles: list[RoleConfig],
         new_role_ids: set[str],
-    ) -> Optional[GraphEdge]:
+    ) -> GraphEdge | None:
         """Map an edge's endpoints to new role IDs.
 
         Args:
@@ -1852,7 +1850,7 @@ Guidelines:
                         break
 
         # Map to node
-        valid_to: Optional[str] = None
+        valid_to: str | None = None
         if to_node in new_role_ids:
             valid_to = to_node
         else:
@@ -1865,7 +1863,7 @@ Guidelines:
         if not valid_from or not valid_to:
             return None
 
-        new_from: Union[str, list[str]] = valid_from[0] if len(valid_from) == 1 else valid_from
+        new_from: str | list[str] = valid_from[0] if len(valid_from) == 1 else valid_from
         return GraphEdge(from_=new_from, to=valid_to, condition=edge.condition)
 
     def _increment_version(self, version: str, major: bool = False, minor: bool = False) -> str:
@@ -1939,9 +1937,9 @@ class DirectorService:
     def __init__(
         self,
         llm_provider: LLMProvider,
-        meta_config: Optional[MetaConfig] = None,
+        meta_config: MetaConfig | None = None,
         model: str = "gpt-5",
-        retry_handler: Optional[RetryHandler] = None,
+        retry_handler: RetryHandler | None = None,
         circuit_breaker_registry: Optional["CircuitBreakerRegistry"] = None,
     ):
         """
@@ -1993,7 +1991,7 @@ class DirectorService:
         prompt_genome: PromptGenome,
         metrics_to_optimize: list[str],
         mutation_types: list[MutationType],
-        constraints: Optional[dict[str, Any]] = None,
+        constraints: dict[str, Any] | None = None,
     ) -> tuple[Diagnosis, SOPMutation]:
         """
         Diagnose and propose mutation in one step

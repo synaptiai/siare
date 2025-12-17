@@ -82,7 +82,7 @@ def _get_relevance_judgments(task_data: dict[str, Any]) -> dict[str, int]:
 
     # Binary relevance from doc ID list
     if "relevant_doc_ids" in metadata:
-        return {doc_id: 1 for doc_id in metadata["relevant_doc_ids"]}
+        return dict.fromkeys(metadata["relevant_doc_ids"], 1)
 
     return {}
 

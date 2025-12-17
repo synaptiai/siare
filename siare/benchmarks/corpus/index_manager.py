@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class CorpusIndexManager:
 
     def __init__(
         self,
-        persist_dir: Optional[str] = None,
+        persist_dir: str | None = None,
         embedding_model: str = DEFAULT_EMBEDDING_MODEL,
     ) -> None:
         """Initialize index manager.
@@ -79,7 +79,7 @@ class CorpusIndexManager:
         )
 
         # Lazy-load embedding model
-        self._embedding_model: Optional["SentenceTransformer"] = None
+        self._embedding_model: SentenceTransformer | None = None
 
         # Metadata storage
         self._metadata_dir = self.persist_dir / "metadata"
@@ -105,7 +105,7 @@ class CorpusIndexManager:
         self,
         index_name: str,
         documents: list[dict[str, Any]],
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> int:
         """Create or replace a vector index.
 

@@ -9,10 +9,9 @@ Paper: https://arxiv.org/abs/2409.12941
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
-
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +57,8 @@ class FRAMESDataset(BenchmarkDataset):
     def __init__(
         self,
         split: str = "test",
-        max_samples: Optional[int] = None,
-        reasoning_type: Optional[str] = None,
+        max_samples: int | None = None,
+        reasoning_type: str | None = None,
     ) -> None:
         """Initialize FRAMES dataset.
 

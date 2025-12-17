@@ -1,7 +1,7 @@
 """Data types for hallucination detection."""
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 
 def _empty_str_list() -> list[str]:
@@ -23,8 +23,8 @@ class ClaimVerification:
     claim: str
     score: float  # 0.0 to 1.0
     verdict: Literal["supported", "contradicted", "unverifiable"]
-    evidence: Optional[str] = None
-    reasoning: Optional[str] = None
+    evidence: str | None = None
+    reasoning: str | None = None
 
 
 @dataclass

@@ -9,17 +9,16 @@ import argparse
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from siare.benchmarks.reporter import BenchmarkReporter
 from siare.benchmarks.runner import BenchmarkRunner
-
 
 logger = logging.getLogger(__name__)
 
 
 def run_frames_baseline(
-    max_samples: Optional[int] = None,
+    max_samples: int | None = None,
     output_dir: Path = Path("benchmarks/results"),
 ) -> dict[str, Any]:
     """Run FRAMES benchmark baseline.
@@ -86,7 +85,7 @@ def run_frames_baseline(
 
 def run_beir_baseline(
     dataset_name: str = "nq",
-    max_samples: Optional[int] = None,
+    max_samples: int | None = None,
     output_dir: Path = Path("benchmarks/results"),
 ) -> dict[str, Any]:
     """Run BEIR benchmark baseline.

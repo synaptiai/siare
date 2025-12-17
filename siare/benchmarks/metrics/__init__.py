@@ -31,7 +31,6 @@ from siare.benchmarks.metrics.retrieval_evolution import (
     retrieval_recall_at_k,
 )
 
-
 __all__ = [
     # Retrieval metrics
     "STANDARD_K_VALUES",

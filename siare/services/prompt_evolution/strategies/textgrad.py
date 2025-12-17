@@ -11,7 +11,7 @@ Key features:
 - DAG backpropagation to upstream roles
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from siare.core.models import (
     Diagnosis,
@@ -26,7 +26,6 @@ from siare.core.models import (
 )
 from siare.services.llm_provider import LLMMessage, LLMProvider
 from siare.services.prompt_evolution.strategies.base import BasePromptOptimizationStrategy
-
 
 # Constants
 TEXT_TRUNCATE_LENGTH = 200
@@ -46,7 +45,7 @@ class TextualGradient:
         critique: str,
         improvement_direction: str,
         magnitude: float = 1.0,
-        source_feedback: Optional[PromptFeedback] = None,
+        source_feedback: PromptFeedback | None = None,
     ):
         self.role_id = role_id
         self.section_id = section_id
@@ -77,8 +76,8 @@ class TextGradStrategy(BasePromptOptimizationStrategy):
 
     def __init__(
         self,
-        llm_provider: Optional[LLMProvider] = None,
-        config: Optional[TextGradConfig] = None,
+        llm_provider: LLMProvider | None = None,
+        config: TextGradConfig | None = None,
     ):
         """
         Initialize TextGrad strategy.
@@ -107,8 +106,8 @@ class TextGradStrategy(BasePromptOptimizationStrategy):
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompts: Optional[dict[str, ParsedPrompt]] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        parsed_prompts: dict[str, ParsedPrompt] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> PromptEvolutionResult:
         """
         Apply textual gradient descent to evolve prompts.
@@ -292,7 +291,7 @@ class TextGradStrategy(BasePromptOptimizationStrategy):
 
         return gradients
 
-    def _derive_improvement(self, feedback: PromptFeedback) -> str:  # noqa: PLR0911
+    def _derive_improvement(self, feedback: PromptFeedback) -> str:
         """Derive improvement direction from critique when not provided."""
         critique = feedback.critique.lower()
 
@@ -437,7 +436,7 @@ class TextGradStrategy(BasePromptOptimizationStrategy):
         self,
         current_content: str,
         gradients: list[TextualGradient],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> str:
         """
@@ -516,7 +515,7 @@ Output only the improved prompt:""",
                 max_tokens=2000,
             )
             return response.content.strip()
-        except Exception:  # noqa: BLE001
+        except Exception:
             # Fallback to heuristic
             return self._heuristic_apply_gradients(
                 content, gradients, None, must_not_change
@@ -526,7 +525,7 @@ Output only the improved prompt:""",
         self,
         content: str,
         gradients: list[TextualGradient],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> str:
         """Apply gradients using heuristic rules."""

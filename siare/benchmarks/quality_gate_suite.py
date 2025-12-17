@@ -7,7 +7,7 @@ Provides statistical rigor for comparing evolved SOPs against baselines before d
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar, Optional
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -20,7 +20,6 @@ from siare.utils.statistics import (
     bootstrap_confidence_interval,
     wilcoxon_signed_rank_test,
 )
-
 
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset
@@ -264,8 +263,8 @@ class QualityGateBenchmark:
         self,
         dataset: "BenchmarkDataset",
         llm_provider: "LLMProvider",
-        metrics: Optional[list[str]] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        metrics: list[str] | None = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize quality gate benchmark.
 
@@ -287,7 +286,7 @@ class QualityGateBenchmark:
         baselines: dict[str, tuple["ProcessConfig", "PromptGenome"]],
         n_runs: int = 30,
         confidence_level: float = 0.95,
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
         random_seed: int = 42,
     ) -> QualityGateResult:
         """Run quality gate benchmark.

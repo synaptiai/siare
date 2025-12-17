@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Optional
 from siare.services.hallucination.claims import extract_claims, verify_claim
 from siare.services.hallucination.types import ClaimVerification, FaithfulnessResult
 
-
 if TYPE_CHECKING:
     from siare.services.execution_engine import ExecutionTrace
     from siare.services.llm_provider import LLMProvider

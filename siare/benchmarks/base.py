@@ -2,8 +2,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
-
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from siare.core.models import Task
@@ -108,7 +107,7 @@ class BenchmarkDataset(ABC):
     def __init__(
         self,
         split: str = "test",
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
     ) -> None:
         """Initialize the benchmark dataset.
 

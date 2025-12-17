@@ -46,21 +46,6 @@ from siare.benchmarks.evolution_runner import (
     GenerationHistoryEntry,
     StatisticalComparison,
 )
-from siare.benchmarks.self_improvement_benchmark import (
-    GenerationSnapshot,
-    SelfImprovementBenchmark,
-    SelfImprovementConfig,
-    SelfImprovementResult,
-)
-from siare.benchmarks.tracking import (
-    ChangeSummary,
-    ConvergenceInfo,
-    LearningCurvePoint,
-    LearningCurveTracker,
-    PromptDiff,
-    PromptDiffTracker,
-    PromptSnapshot,
-)
 from siare.benchmarks.hotpotqa import HotpotQADataset
 from siare.benchmarks.metrics import (
     STANDARD_K_VALUES,
@@ -104,6 +89,12 @@ from siare.benchmarks.rag_runner import (
 from siare.benchmarks.reporter import BenchmarkReporter
 from siare.benchmarks.reproducibility import EnvironmentSnapshot, ReproducibilityTracker
 from siare.benchmarks.runner import BenchmarkResults, BenchmarkRunner, SampleResult
+from siare.benchmarks.self_improvement_benchmark import (
+    GenerationSnapshot,
+    SelfImprovementBenchmark,
+    SelfImprovementConfig,
+    SelfImprovementResult,
+)
 from siare.benchmarks.sops import (
     create_benchmark_genome,
     create_benchmark_sop,
@@ -112,7 +103,15 @@ from siare.benchmarks.sops import (
     create_rag_genome,
     create_rag_sop,
 )
-
+from siare.benchmarks.tracking import (
+    ChangeSummary,
+    ConvergenceInfo,
+    LearningCurvePoint,
+    LearningCurveTracker,
+    PromptDiff,
+    PromptDiffTracker,
+    PromptSnapshot,
+)
 
 __all__ = [
     # Constants

@@ -13,7 +13,7 @@ Key features:
 
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 
 from siare.core.models import (
     Diagnosis,
@@ -28,7 +28,6 @@ from siare.core.models import (
 )
 from siare.services.llm_provider import LLMMessage, LLMProvider
 from siare.services.prompt_evolution.strategies.base import BasePromptOptimizationStrategy
-
 
 # Constants
 TEXT_TRUNCATE_LENGTH = 200
@@ -49,7 +48,7 @@ class PromptVariant:
         content: str,
         fitness: float = 0.0,
         generation: int = 0,
-        parent_ids: Optional[list[str]] = None,
+        parent_ids: list[str] | None = None,
     ):
         self.id = f"{role_id}-gen{generation}-{random.randint(1000, 9999)}"  # noqa: S311
         self.role_id = role_id
@@ -76,8 +75,8 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
 
     def __init__(
         self,
-        llm_provider: Optional[LLMProvider] = None,
-        config: Optional[EvoPromptConfig] = None,
+        llm_provider: LLMProvider | None = None,
+        config: EvoPromptConfig | None = None,
     ):
         """
         Initialize EvoPrompt strategy.
@@ -110,8 +109,8 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompts: Optional[dict[str, ParsedPrompt]] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        parsed_prompts: dict[str, ParsedPrompt] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> PromptEvolutionResult:
         """
         Evolve prompts using evolutionary algorithms.
@@ -324,7 +323,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
         self,
         population: list[PromptVariant],
         feedback: list[PromptFeedback],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> list[PromptVariant]:
         """
@@ -403,7 +402,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
         parent1: PromptVariant,
         parent2: PromptVariant,
         feedback: list[PromptFeedback],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> PromptVariant:
         """
@@ -432,7 +431,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
         self,
         parent: PromptVariant,
         feedback: list[PromptFeedback],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> PromptVariant:
         """
@@ -517,7 +516,7 @@ Output only the combined prompt:""",
                     max_tokens=2000,
                 )
                 return response.content.strip()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         # Fallback to heuristic
         return self._heuristic_crossover(parent1_content, parent2_content, None)
@@ -578,7 +577,7 @@ Output only the improved prompt:""",
                     max_tokens=2000,
                 )
                 return response.content.strip()
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         # Fallback to heuristic
         return self._heuristic_mutate(content, feedback, None)
@@ -587,7 +586,7 @@ Output only the improved prompt:""",
         self,
         parent1_content: str,
         parent2_content: str,
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
     ) -> str:
         """Heuristic crossover when LLM not available."""
         if parsed_prompt and len(parsed_prompt.sections) > 1:
@@ -654,7 +653,7 @@ Output only the improved prompt:""",
         self,
         content: str,
         feedback: list[PromptFeedback],  # noqa: ARG002
-        parsed_prompt: Optional[ParsedPrompt],  # noqa: ARG002
+        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
     ) -> str:
         """Heuristic mutation when LLM not available."""
         lines = content.split("\n")
@@ -788,14 +787,14 @@ Output only the improved prompt:""",
         ]
         self._populations[role_id] = population
 
-    def get_best_variant(self, role_id: str) -> Optional[PromptVariant]:
+    def get_best_variant(self, role_id: str) -> PromptVariant | None:
         """Get best variant for a role."""
         population = self._populations.get(role_id, [])
         if not population:
             return None
         return max(population, key=lambda v: v.fitness)
 
-    def reset_population(self, role_id: Optional[str] = None) -> None:
+    def reset_population(self, role_id: str | None = None) -> None:
         """Reset population(s) to empty."""
         if role_id:
             self._populations.pop(role_id, None)

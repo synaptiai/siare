@@ -13,7 +13,6 @@ from siare.core.models import (
     RolePrompt,
 )
 
-
 logger = logging.getLogger(__name__)
 
 # Severity thresholds for classification

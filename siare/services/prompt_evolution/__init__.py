@@ -47,7 +47,6 @@ from siare.services.prompt_evolution.strategies.evoprompt import EvoPromptStrate
 from siare.services.prompt_evolution.strategies.metaprompt import MetaPromptStrategy
 from siare.services.prompt_evolution.strategies.textgrad import TextGradStrategy
 
-
 __all__ = [
     "AdaptiveStrategySelector",
     "BaseConstraintValidator",

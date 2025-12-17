@@ -5,10 +5,9 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from siare.services.llm_provider import LLMMessage, LLMProvider, LLMResponse
-
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ class LLMCache:
 
     def get(
         self, messages: list[LLMMessage], model: str, temperature: float, **kwargs: Any
-    ) -> Optional[LLMResponse]:
+    ) -> LLMResponse | None:
         """Get cached response if available"""
 
         cache_key = self._compute_cache_key(messages, model, temperature, **kwargs)
@@ -108,7 +107,7 @@ class LLMCache:
                 self.stats["hits"] += 1
                 return self._deserialize_response(entry["response"])
 
-            except Exception:  # noqa: BLE001 - Graceful cache failure, don't crash on corrupt cache
+            except Exception:
                 return None
 
         self.stats["misses"] += 1
@@ -241,7 +240,7 @@ class CachedLLMProvider(LLMProvider):
     def __init__(
         self,
         provider: LLMProvider,
-        cache: Optional[LLMCache] = None,
+        cache: LLMCache | None = None,
         enable_cache: bool = True,
     ):
         """
@@ -261,7 +260,7 @@ class CachedLLMProvider(LLMProvider):
         messages: list[LLMMessage],
         model: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
         """Generate completion with caching"""

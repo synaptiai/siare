@@ -2,13 +2,12 @@
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
 from siare.adapters.base import ToolAdapter, register_adapter
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 # Sentence-transformers model (lazy loaded) - lowercase to avoid constant redefinition errors
-_sentence_transformer_model: Optional[Any] = None
+_sentence_transformer_model: Any | None = None
 _sentence_transformer_name = "all-MiniLM-L6-v2"
 
 # Import flags (use lowercase to avoid constant redefinition errors)
@@ -40,7 +39,7 @@ except ImportError:
     OpenAI = None  # type: ignore
 
 
-def _get_sentence_transformer_model() -> Optional[Any]:
+def _get_sentence_transformer_model() -> Any | None:
     """Lazy load sentence-transformer model"""
     global _sentence_transformer_model
     if _sentence_transformer_model is None and _sentence_transformers_available:
@@ -106,8 +105,8 @@ class VectorSearchAdapter(ToolAdapter):
         if self.max_memory_vectors <= 0:
             raise ValueError(f"max_memory_vectors must be positive, got {self.max_memory_vectors}")
 
-        self.client: Optional[Any] = None
-        self.index: Optional[Any] = None
+        self.client: Any | None = None
+        self.index: Any | None = None
 
         # In-memory storage for MVP
         self._memory_vectors: list[npt.NDArray[np.float64]] = []
@@ -389,7 +388,7 @@ class VectorSearchAdapter(ToolAdapter):
                 self.dimension = expected_dim
 
     def _search_memory(
-        self, query_vector: list[float], top_k: int, filter_dict: Optional[dict[str, Any]] = None
+        self, query_vector: list[float], top_k: int, filter_dict: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Search in-memory vectors"""
 
@@ -429,7 +428,7 @@ class VectorSearchAdapter(ToolAdapter):
         return results
 
     def _search_pinecone(
-        self, query_vector: list[float], top_k: int, filter_dict: Optional[dict[str, Any]] = None
+        self, query_vector: list[float], top_k: int, filter_dict: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Search Pinecone index"""
 
@@ -455,7 +454,7 @@ class VectorSearchAdapter(ToolAdapter):
         return results
 
     def _search_chroma(
-        self, query_vector: list[float], top_k: int, filter_dict: Optional[dict[str, Any]] = None
+        self, query_vector: list[float], top_k: int, filter_dict: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Search ChromaDB collection"""
 
@@ -484,14 +483,14 @@ class VectorSearchAdapter(ToolAdapter):
         return results
 
     def _search_qdrant(
-        self, query_vector: list[float], top_k: int, filter_dict: Optional[dict[str, Any]] = None
+        self, query_vector: list[float], top_k: int, filter_dict: dict[str, Any] | None = None
     ) -> list[dict[str, Any]]:
         """Search Qdrant collection"""
 
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         # Build filter
-        qd_filter: Optional[Filter] = None
+        qd_filter: Filter | None = None
         if filter_dict:
             conditions: list[FieldCondition] = [
                 FieldCondition(key=k, match=MatchValue(value=v)) for k, v in filter_dict.items()

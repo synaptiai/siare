@@ -18,7 +18,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from siare.benchmarks.adapters import benchmark_to_taskset
 from siare.benchmarks.metrics import register_benchmark_metrics
@@ -31,7 +31,6 @@ from siare.core.models import StatisticalTestResult
 from siare.utils.statistics import (
     wilcoxon_signed_rank_test,
 )
-
 
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset
@@ -95,8 +94,8 @@ class SelfImprovementConfig:
     # Quick mode for testing
     quick_mode: bool = False
     # Budget constraints
-    max_cost: Optional[float] = None
-    max_evaluations: Optional[int] = None
+    max_cost: float | None = None
+    max_evaluations: int | None = None
     # Convergence control
     no_early_stop: bool = False
     convergence_threshold: float = 0.01
@@ -114,7 +113,7 @@ class SelfImprovementConfig:
         default_factory=lambda: ["query_decomposer", "synthesizer"]
     )
     # Reproducibility - set to any integer for deterministic benchmark runs
-    random_seed: Optional[int] = None
+    random_seed: int | None = None
 
 
 @dataclass
@@ -169,15 +168,15 @@ class SelfImprovementResult:
     # Statistical significance
     significance_tests: dict[str, StatisticalTestResult]
     # Raw results for analysis
-    initial_results: Optional[BenchmarkResults] = None
-    evolved_results: Optional[BenchmarkResults] = None
+    initial_results: BenchmarkResults | None = None
+    evolved_results: BenchmarkResults | None = None
     # Timing
     total_time_seconds: float = 0.0
     # Learning curve data
     learning_curve_data: dict[str, list[Any]] = field(default_factory=_empty_dict)
     # Convergence info
     converged: bool = False
-    convergence_generation: Optional[int] = None
+    convergence_generation: int | None = None
 
     def summary(self) -> dict[str, Any]:
         """Return summary of self-improvement results."""
@@ -238,13 +237,13 @@ class SelfImprovementBenchmark:
         llm_provider: LLMProvider,
         base_sop: ProcessConfig,
         base_genome: PromptGenome,
-        config_store: Optional[ConfigStore] = None,
-        gene_pool: Optional[GenePool] = None,
-        qd_grid: Optional[QDGridManager] = None,
-        execution_engine: Optional[ExecutionEngine] = None,
-        evaluation_service: Optional[EvaluationService] = None,
-        director_service: Optional[DirectorService] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        config_store: ConfigStore | None = None,
+        gene_pool: GenePool | None = None,
+        qd_grid: QDGridManager | None = None,
+        execution_engine: ExecutionEngine | None = None,
+        evaluation_service: EvaluationService | None = None,
+        director_service: DirectorService | None = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the self-improvement benchmark.
 
@@ -274,7 +273,7 @@ class SelfImprovementBenchmark:
         self._execution_engine = execution_engine
         self._evaluation_service = evaluation_service
         self._director_service = director_service
-        self._scheduler: Optional[EvolutionScheduler] = None
+        self._scheduler: EvolutionScheduler | None = None
 
         # Trackers
         self._prompt_tracker = PromptDiffTracker()
@@ -328,11 +327,11 @@ class SelfImprovementBenchmark:
         self,
         phase: str,
         generation: int,
-        initial_results: Optional[BenchmarkResults],
+        initial_results: BenchmarkResults | None,
         initial_prompts: dict[str, str],
         generation_snapshots: list[GenerationSnapshot],
-        best_gene_id: Optional[str] = None,
-        best_metrics: Optional[dict[str, float]] = None,
+        best_gene_id: str | None = None,
+        best_metrics: dict[str, float] | None = None,
     ) -> None:
         """Save checkpoint for crash recovery.
 
@@ -386,7 +385,7 @@ class SelfImprovementBenchmark:
         checkpoint_path.write_text(json.dumps(checkpoint, indent=2, default=str))
         logger.info(f"Saved checkpoint at phase={phase}, generation={generation}")
 
-    def _load_checkpoint(self) -> Optional[dict[str, Any]]:
+    def _load_checkpoint(self) -> dict[str, Any] | None:
         """Load checkpoint if it exists.
 
         Returns:
@@ -409,7 +408,7 @@ class SelfImprovementBenchmark:
 
     def _restore_from_checkpoint(
         self, checkpoint: dict[str, Any]
-    ) -> tuple[Optional[BenchmarkResults], dict[str, str], list[GenerationSnapshot], int]:
+    ) -> tuple[BenchmarkResults | None, dict[str, str], list[GenerationSnapshot], int]:
         """Restore state from checkpoint.
 
         Args:
@@ -793,7 +792,7 @@ class SelfImprovementBenchmark:
         self,
         dataset: BenchmarkDataset,
         initial_prompts: dict[str, str],
-        initial_results: Optional[BenchmarkResults] = None,
+        initial_results: BenchmarkResults | None = None,
     ) -> tuple[SOPGene, int, list[GenerationSnapshot]]:
         """Run evolution loop.
 
@@ -1012,7 +1011,7 @@ class SelfImprovementBenchmark:
             max_workers=self._config.parallel_samples,
         )
 
-    def run(self, dataset: Optional[BenchmarkDataset] = None) -> SelfImprovementResult:
+    def run(self, dataset: BenchmarkDataset | None = None) -> SelfImprovementResult:
         """Run the self-improvement benchmark.
 
         Supports resume from checkpoint if config.resume=True and a checkpoint exists.
@@ -1041,7 +1040,7 @@ class SelfImprovementBenchmark:
             dataset = self._get_dataset_for_tier(self._config.dataset_tier)
 
         # Check for checkpoint if resume is enabled
-        initial_results: Optional[BenchmarkResults] = None
+        initial_results: BenchmarkResults | None = None
         initial_prompts: dict[str, str] = {}
         snapshots: list[GenerationSnapshot] = []
         resumed_from_checkpoint = False
@@ -1155,7 +1154,7 @@ class SelfImprovementBenchmark:
             convergence_generation=convergence_info.convergence_generation,
         )
 
-    def run_quick(self, dataset: Optional[BenchmarkDataset] = None) -> SelfImprovementResult:
+    def run_quick(self, dataset: BenchmarkDataset | None = None) -> SelfImprovementResult:
         """Run a quick version of the benchmark (3 generations).
 
         Args:

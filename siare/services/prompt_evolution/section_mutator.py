@@ -15,7 +15,6 @@ from siare.core.models import (
 )
 from siare.services.prompt_evolution.constraint_validator import ConstraintValidator
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -13,7 +13,7 @@ Strategy selection rules:
 """
 
 from collections import Counter, defaultdict
-from typing import Any, Optional
+from typing import Any
 
 from siare.core.models import (
     Diagnosis,
@@ -35,7 +35,6 @@ from siare.services.prompt_evolution.strategies.base import (
 from siare.services.prompt_evolution.strategies.evoprompt import EvoPromptStrategy
 from siare.services.prompt_evolution.strategies.metaprompt import MetaPromptStrategy
 from siare.services.prompt_evolution.strategies.textgrad import TextGradStrategy
-
 
 # Constants
 MAX_SELECTION_HISTORY = 100
@@ -74,10 +73,10 @@ class AdaptiveStrategySelector(BasePromptOptimizationStrategy):
 
     def __init__(
         self,
-        llm_provider: Optional[LLMProvider] = None,
-        textgrad_config: Optional[TextGradConfig] = None,
-        evoprompt_config: Optional[EvoPromptConfig] = None,
-        metaprompt_config: Optional[MetaPromptConfig] = None,
+        llm_provider: LLMProvider | None = None,
+        textgrad_config: TextGradConfig | None = None,
+        evoprompt_config: EvoPromptConfig | None = None,
+        metaprompt_config: MetaPromptConfig | None = None,
         default_strategy: PromptOptimizationStrategyType = PromptOptimizationStrategyType.EVOPROMPT,
     ):
         """
@@ -240,8 +239,8 @@ class AdaptiveStrategySelector(BasePromptOptimizationStrategy):
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompts: Optional[dict[str, ParsedPrompt]] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        parsed_prompts: dict[str, ParsedPrompt] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> PromptEvolutionResult:
         """
         Automatically select and apply the optimal strategy.
@@ -324,8 +323,8 @@ class PromptOptimizationFactory:
     @staticmethod
     def create(
         strategy_type: str,
-        llm_provider: Optional[LLMProvider] = None,
-        config: Optional[dict[str, Any]] = None,
+        llm_provider: LLMProvider | None = None,
+        config: dict[str, Any] | None = None,
     ) -> BasePromptOptimizationStrategy:
         """
         Create a prompt optimization strategy.

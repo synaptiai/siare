@@ -12,7 +12,6 @@ from siare.benchmarks.adapters import benchmark_to_taskset
 from siare.benchmarks.metrics import register_benchmark_metrics
 from siare.benchmarks.runner import BenchmarkResults, BenchmarkRunner
 
-
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset
     from siare.core.models import (
@@ -62,10 +61,10 @@ class EvolutionBenchmarkConfig:
     )
     model: str = "llama3.2:1b"
     quick_mode: bool = False
-    max_samples: Optional[int] = None
+    max_samples: int | None = None
     # Budget constraints
-    max_cost: Optional[float] = None
-    max_evaluations: Optional[int] = None
+    max_cost: float | None = None
+    max_evaluations: int | None = None
 
 
 @dataclass
@@ -90,7 +89,7 @@ class StatisticalComparison:
     improvement_pct: float
     baseline_ci: tuple[float, float] = (0.0, 0.0)
     evolved_ci: tuple[float, float] = (0.0, 0.0)
-    p_value: Optional[float] = None
+    p_value: float | None = None
 
 
 @dataclass
@@ -186,7 +185,7 @@ class EvolutionBenchmarkRunner:
         execution_engine: Optional["ExecutionEngine"] = None,
         evaluation_service: Optional["EvaluationService"] = None,
         director_service: Optional["DirectorService"] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the evolution benchmark runner.
 
@@ -217,7 +216,7 @@ class EvolutionBenchmarkRunner:
         self._execution_engine = execution_engine
         self._evaluation_service = evaluation_service
         self._director_service = director_service
-        self._scheduler: Optional[EvolutionScheduler] = None
+        self._scheduler: EvolutionScheduler | None = None
 
     def _ensure_services(self) -> None:
         """Ensure all services are initialized."""
@@ -641,7 +640,7 @@ class EvolutionBenchmarkRunner:
 
     def _calculate_p_value(
         self, baseline: list[float], evolved: list[float]
-    ) -> Optional[float]:
+    ) -> float | None:
         """Calculate p-value for difference between groups.
 
         Args:

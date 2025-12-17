@@ -8,7 +8,6 @@ Standard k-values: [1, 3, 5, 10, 100, 1000]
 import math
 from dataclasses import dataclass
 
-
 STANDARD_K_VALUES = [1, 3, 5, 10, 100, 1000]
 
 

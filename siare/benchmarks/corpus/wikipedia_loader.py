@@ -10,7 +10,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote, urlparse
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ class WikipediaCorpusLoader:
 
     def __init__(
         self,
-        cache_dir: Optional[str] = None,
+        cache_dir: str | None = None,
         chunk_size: int = 500,
         chunk_overlap: int = 50,
     ) -> None:
@@ -128,7 +128,7 @@ class WikipediaCorpusLoader:
             time.sleep(self.RATE_LIMIT_DELAY - elapsed)
         self._last_request_time = time.time()
 
-    def fetch_article(self, title: str) -> Optional[str]:
+    def fetch_article(self, title: str) -> str | None:
         """Fetch Wikipedia article content.
 
         Args:
@@ -223,7 +223,7 @@ class WikipediaCorpusLoader:
     def build_corpus_from_frames(
         self,
         dataset: "FRAMESDataset",
-        max_articles: Optional[int] = None,
+        max_articles: int | None = None,
         chunk: bool = True,
     ) -> list[dict[str, Any]]:
         """Build corpus from FRAMES dataset's Wikipedia references.

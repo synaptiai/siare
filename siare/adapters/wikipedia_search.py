@@ -11,7 +11,6 @@ import requests
 
 from siare.adapters.base import ToolAdapter, register_adapter
 
-
 logger = logging.getLogger(__name__)
 
 

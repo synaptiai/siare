@@ -8,10 +8,9 @@ Source: https://github.com/beir-cellar/beir
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
-
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +62,8 @@ class BEIRDataset(BenchmarkDataset):
         self,
         dataset_name: str = "nq",
         split: str = "test",
-        max_samples: Optional[int] = None,
-        data_dir: Optional[str] = None,
+        max_samples: int | None = None,
+        data_dir: str | None = None,
     ) -> None:
         """Initialize BEIR dataset.
 

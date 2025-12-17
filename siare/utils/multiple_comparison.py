@@ -15,7 +15,6 @@ from siare.core.constants import (
 )
 from siare.core.models import StatisticalTestResult
 
-
 logger = logging.getLogger(__name__)
 
 

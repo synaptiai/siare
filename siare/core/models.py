@@ -6,10 +6,9 @@ import re
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, ClassVar, Literal, Optional, Union
+from typing import Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
 
 __all__ = [
     "Action",
@@ -148,10 +147,10 @@ PromptRef = str  # Reference to prompt in PromptGenome
 class RoleInput(BaseModel):
     """Input configuration for a role"""
 
-    from_: Union[str, list[str]] = Field(
+    from_: str | list[str] = Field(
         validation_alias="from", serialization_alias="from"
     )
-    fields: Optional[list[str]] = None
+    fields: list[str] | None = None
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)  # type: ignore[call-arg]
 
@@ -161,21 +160,21 @@ class RoleConfig(BaseModel):
 
     id: str
     model: ModelRef
-    tools: Optional[list[ToolRef]] = None
+    tools: list[ToolRef] | None = None
     promptRef: PromptRef
-    inputs: Optional[list[RoleInput]] = None
-    outputs: Optional[list[str]] = None
-    params: Optional[dict[str, Any]] = None
+    inputs: list[RoleInput] | None = None
+    outputs: list[str] | None = None
+    params: dict[str, Any] | None = None
 
 
 class GraphEdge(BaseModel):
     """Edge in the execution graph"""
 
-    from_: Union[str, list[str]] = Field(
+    from_: str | list[str] = Field(
         validation_alias="from", serialization_alias="from"
     )
     to: str
-    condition: Optional[str] = None
+    condition: str | None = None
 
     model_config = ConfigDict(populate_by_name=True, by_alias=True)  # type: ignore[call-arg]
 
@@ -185,13 +184,13 @@ class ProcessConfig(BaseModel):
 
     id: str
     version: str
-    description: Optional[str] = None
+    description: str | None = None
     models: dict[str, ModelRef]
     tools: list[ToolRef]
     roles: list[RoleConfig]
     graph: list[GraphEdge]
     hyperparameters: dict[str, Any] = Field(default_factory=dict)
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -202,11 +201,11 @@ class ProcessConfig(BaseModel):
 class PromptConstraints(BaseModel):
     """Constraints for prompt evolution"""
 
-    mustNotChange: Optional[list[str]] = None
-    allowedChanges: Optional[list[str]] = None
-    domainTips: Optional[list[str]] = None
-    maxLength: Optional[int] = None
-    minLength: Optional[int] = None
+    mustNotChange: list[str] | None = None
+    allowedChanges: list[str] | None = None
+    domainTips: list[str] | None = None
+    maxLength: int | None = None
+    minLength: int | None = None
 
 
 class RolePrompt(BaseModel):
@@ -214,7 +213,7 @@ class RolePrompt(BaseModel):
 
     id: str
     content: str
-    constraints: Optional[PromptConstraints] = None
+    constraints: PromptConstraints | None = None
 
 
 class PromptGenome(BaseModel):
@@ -223,7 +222,7 @@ class PromptGenome(BaseModel):
     id: str
     version: str
     rolePrompts: dict[str, RolePrompt]  # promptRef -> RolePrompt
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 
 class MetaConfig(BaseModel):
@@ -233,8 +232,8 @@ class MetaConfig(BaseModel):
     version: str
     directorPrompt: RolePrompt
     judgePrompts: dict[str, RolePrompt]  # metricId -> judge prompt
-    globalAgentArchetypes: Optional[dict[str, RolePrompt]] = None
-    metadata: Optional[dict[str, Any]] = None
+    globalAgentArchetypes: dict[str, RolePrompt] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -291,9 +290,9 @@ class MetricConfig(BaseModel):
 
     id: str
     type: MetricType
-    model: Optional[ModelRef] = None
-    promptRef: Optional[str] = None
-    fnRef: Optional[str] = None
+    model: ModelRef | None = None
+    promptRef: str | None = None
+    fnRef: str | None = None
     inputs: list[str]
     aggregationMethod: AggregationMethod = AggregationMethod.MEAN
     weight: float = 1.0
@@ -323,18 +322,18 @@ class MetricResult(BaseModel):
 
     metricId: str
     score: float  # Normalized 0-1
-    rawValue: Optional[Any] = None
-    reasoning: Optional[str] = None
+    rawValue: Any | None = None
+    reasoning: str | None = None
     source: MetricSource
 
 
 class EvaluationArtifacts(BaseModel):
     """Artifacts from evaluation for feedback"""
 
-    llmFeedback: Optional[dict[str, str]] = None  # metricId -> critique
-    failureModes: Optional[list[str]] = None
-    toolErrors: Optional[list[str]] = None
-    traceRefs: Optional[list[str]] = None
+    llmFeedback: dict[str, str] | None = None  # metricId -> critique
+    failureModes: list[str] | None = None
+    toolErrors: list[str] | None = None
+    traceRefs: list[str] | None = None
     extra: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -347,9 +346,9 @@ class EvaluationVector(BaseModel):
     promptGenomeVersion: str
     runId: str
     metrics: list[MetricResult]
-    artifacts: Optional[EvaluationArtifacts] = None
+    artifacts: EvaluationArtifacts | None = None
     timestamp: str = Field(default_factory=_utc_now_iso)
-    taskMetadata: Optional[dict[str, Any]] = None
+    taskMetadata: dict[str, Any] | None = None
 
 
 # ============================================================================
@@ -363,7 +362,7 @@ class OutlierInfo(BaseModel):
     indices: list[int]  # Indices of outlier samples
     values: list[float]  # Outlier values
     method: str  # Detection method used (e.g., "iqr", "zscore")
-    threshold: Optional[float] = None  # Threshold used for detection
+    threshold: float | None = None  # Threshold used for detection
 
 
 class AggregatedMetric(BaseModel):
@@ -372,14 +371,14 @@ class AggregatedMetric(BaseModel):
     metricId: str
     mean: float
     median: float
-    trimmedMean: Optional[float] = None  # 10% trimmed mean
-    confidenceInterval: Optional[tuple[float, float]] = None  # (lower, upper) 95% CI
-    standardDeviation: Optional[float] = None
-    standardError: Optional[float] = None
+    trimmedMean: float | None = None  # 10% trimmed mean
+    confidenceInterval: tuple[float, float] | None = None  # (lower, upper) 95% CI
+    standardDeviation: float | None = None
+    standardError: float | None = None
     sampleSize: int
-    outliers: Optional[OutlierInfo] = None
+    outliers: OutlierInfo | None = None
     aggregationMethod: AggregationMethod
-    rawValues: Optional[list[float]] = None  # Optional storage of raw values
+    rawValues: list[float] | None = None  # Optional storage of raw values
 
 
 class StatisticalTestResult(BaseModel):
@@ -389,7 +388,7 @@ class StatisticalTestResult(BaseModel):
     statistic: float
     pValue: float
     isSignificant: bool  # p < 0.05
-    effectSize: Optional[float] = None  # Cohen's d or rank-biserial correlation
+    effectSize: float | None = None  # Cohen's d or rank-biserial correlation
     confidenceLevel: float = 0.95
     hypothesis: str  # Description of the hypothesis tested
 
@@ -433,8 +432,8 @@ class ErrorContext(BaseModel):
     component: str  # Which component failed
     operation: str  # What operation failed
     errorMessage: str
-    stackTrace: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    stackTrace: str | None = None
+    metadata: dict[str, Any] | None = None
     timestamp: str = Field(default_factory=_utc_now_iso)
     retryable: bool
 
@@ -494,11 +493,11 @@ class Diagnosis(BaseModel):
     """Director's diagnosis of SOP performance"""
 
     primaryWeakness: str
-    secondaryWeaknesses: Optional[list[str]] = None
-    strengths: Optional[list[str]] = None
+    secondaryWeaknesses: list[str] | None = None
+    strengths: list[str] | None = None
     rootCauseAnalysis: str
     recommendations: list[str]
-    referencedArtifacts: Optional[list[str]] = None
+    referencedArtifacts: list[str] | None = None
 
 
 class MutationType(str, Enum):
@@ -519,7 +518,7 @@ class SOPMutation(BaseModel):
     parentSopId: str
     parentVersion: str
     newConfig: ProcessConfig
-    newPromptGenome: Optional[PromptGenome] = None
+    newPromptGenome: PromptGenome | None = None
     rationale: str
     mutationType: MutationType
 
@@ -541,24 +540,24 @@ class MetaMutation(BaseModel):
 class QDFeatures(BaseModel):
     """Quality-Diversity features for an SOP"""
 
-    complexity: Optional[float] = None
-    diversityEmbedding: Optional[list[float]] = None
-    domainFeatures: Optional[dict[str, float]] = None
-    featureVersion: Optional[str] = None
+    complexity: float | None = None
+    diversityEmbedding: list[float] | None = None
+    domainFeatures: dict[str, float] | None = None
+    featureVersion: str | None = None
 
 
 class ParetoFlags(BaseModel):
     """Pareto frontier membership flags"""
 
     isParetoOptimal: bool
-    paretoSetId: Optional[str] = None
+    paretoSetId: str | None = None
 
 
 class QDCell(BaseModel):
     """QD Grid cell assignment"""
 
     cellId: str
-    isCellElite: Optional[bool] = None
+    isCellElite: bool | None = None
 
 
 class SOPGene(BaseModel):
@@ -566,17 +565,17 @@ class SOPGene(BaseModel):
 
     sopId: str
     version: str
-    parent: Optional[dict[str, str]] = None  # {sopId, version}
+    parent: dict[str, str] | None = None  # {sopId, version}
     promptGenomeId: str
     promptGenomeVersion: str
     configSnapshot: ProcessConfig
     evaluations: list[EvaluationVector]
     aggregatedMetrics: dict[str, AggregatedMetric]  # Full statistical metadata
-    qdFeatures: Optional[QDFeatures] = None
-    frontierFlags: Optional[ParetoFlags] = None
-    qdCell: Optional[QDCell] = None
-    tags: Optional[list[str]] = None
-    generation: Optional[int] = None  # Generation number for temporal queries (RECENT strategy)
+    qdFeatures: QDFeatures | None = None
+    frontierFlags: ParetoFlags | None = None
+    qdCell: QDCell | None = None
+    tags: list[str] | None = None
+    generation: int | None = None  # Generation number for temporal queries (RECENT strategy)
     createdAt: str = Field(default_factory=_utc_now_iso)
 
     def get_metric_mean(self, metric_id: str) -> float:
@@ -615,7 +614,7 @@ class SOPGene(BaseModel):
 
     def get_metric_confidence_interval(
         self, metric_id: str
-    ) -> Optional[tuple[float, float]]:
+    ) -> tuple[float, float] | None:
         """
         Get confidence interval for a metric as (lower, upper) tuple.
 
@@ -637,7 +636,7 @@ class MetaGene(BaseModel):
 
     metaId: str
     version: str
-    parent: Optional[dict[str, str]] = None
+    parent: dict[str, str] | None = None
     configSnapshot: MetaConfig
     metaMetrics: dict[str, float]
     createdAt: str = Field(default_factory=_utc_now_iso)
@@ -651,11 +650,11 @@ class MetaGene(BaseModel):
 class TaskMetadata(BaseModel):
     """Metadata for a task"""
 
-    category: Optional[str] = None
-    difficulty: Optional[str] = None
-    importance: Optional[float] = 1.0
-    source: Optional[str] = None
-    tags: Optional[list[str]] = None
+    category: str | None = None
+    difficulty: str | None = None
+    importance: float | None = 1.0
+    source: str | None = None
+    tags: list[str] | None = None
 
 
 class Task(BaseModel):
@@ -663,8 +662,8 @@ class Task(BaseModel):
 
     id: str
     input: dict[str, Any]
-    groundTruth: Optional[dict[str, Any]] = None
-    metadata: Optional[TaskMetadata] = None
+    groundTruth: dict[str, Any] | None = None
+    metadata: TaskMetadata | None = None
     weight: float = 1.0
 
 
@@ -673,7 +672,7 @@ class TaskSet(BaseModel):
 
     id: str
     domain: str
-    description: Optional[str] = None
+    description: str | None = None
     tasks: list[Task]
     createdAt: str = Field(default_factory=_utc_now_iso)
     version: str
@@ -682,14 +681,14 @@ class TaskSet(BaseModel):
 class BudgetLimit(BaseModel):
     """Budget constraints"""
 
-    maxCost: Optional[float] = None
-    maxEvaluations: Optional[int] = None
-    maxLLMCalls: Optional[int] = None
-    maxWallTime: Optional[int] = None  # seconds
+    maxCost: float | None = None
+    maxEvaluations: int | None = None
+    maxLLMCalls: int | None = None
+    maxWallTime: int | None = None  # seconds
 
     @field_validator("maxCost", "maxEvaluations", "maxLLMCalls", "maxWallTime")
     @classmethod
-    def validate_positive(cls, v: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+    def validate_positive(cls, v: int | float | None) -> int | float | None:
         if v is not None and v < 0:
             raise ValueError("Budget limits must be positive")
         return v
@@ -707,13 +706,13 @@ class BudgetUsage(BaseModel):
 class EvolutionConstraints(BaseModel):
     """Constraints for evolution"""
 
-    safetyMetrics: Optional[list[dict[str, Any]]] = None  # {metricId, minValue}
-    budgetLimit: Optional[BudgetLimit] = None
-    mandatoryRoles: Optional[list[str]] = None
-    maxRoles: Optional[int] = None
-    maxEdges: Optional[int] = None
-    allowedTools: Optional[list[str]] = None
-    disallowedMutationTypes: Optional[list[MutationType]] = None
+    safetyMetrics: list[dict[str, Any]] | None = None  # {metricId, minValue}
+    budgetLimit: BudgetLimit | None = None
+    mandatoryRoles: list[str] | None = None
+    maxRoles: int | None = None
+    maxEdges: int | None = None
+    allowedTools: list[str] | None = None
+    disallowedMutationTypes: list[MutationType] | None = None
 
 
 class SelectionStrategy(str, Enum):
@@ -787,7 +786,7 @@ class HybridStrategyComponent(BaseModel):
         le=1.0,
         description="Weight for this strategy (must sum to 1.0 across all components)",
     )
-    config: Optional[dict[str, Any]] = Field(
+    config: dict[str, Any] | None = Field(
         default=None,
         description="Strategy-specific configuration",
     )
@@ -838,12 +837,12 @@ class SelectionStrategyConfig(BaseModel):
     strategyType: SelectionStrategy
 
     # Strategy-specific configs (only one should be set based on strategyType)
-    qdCuriosityConfig: Optional[QDCuriosityConfig] = None
-    recentConfig: Optional[RecentSelectionConfig] = None
-    hybridConfig: Optional[HybridSelectionConfig] = None
+    qdCuriosityConfig: QDCuriosityConfig | None = None
+    recentConfig: RecentSelectionConfig | None = None
+    hybridConfig: HybridSelectionConfig | None = None
 
     # Generic config for other strategies (PARETO, TOURNAMENT, QD_UNIFORM, QD_QUALITY_WEIGHTED)
-    genericConfig: Optional[dict[str, Any]] = None
+    genericConfig: dict[str, Any] | None = None
 
     @model_validator(mode="after")
     def validate_config_matches_strategy(self) -> SelectionStrategyConfig:
@@ -906,11 +905,11 @@ class EvolutionPhase(BaseModel):
     selectionStrategy: SelectionStrategy
     parentsPerGeneration: int
     maxGenerations: int
-    budgetPerGeneration: Optional[BudgetLimit] = None
-    convergence: Optional[dict[str, Any]] = None  # {patience, improvementThreshold}
+    budgetPerGeneration: BudgetLimit | None = None
+    convergence: dict[str, Any] | None = None  # {patience, improvementThreshold}
 
     # Optional detailed strategy configuration
-    selectionStrategyConfig: Optional[SelectionStrategyConfig] = None
+    selectionStrategyConfig: SelectionStrategyConfig | None = None
 
 
 class EvolutionJobStatus(str, Enum):
@@ -929,8 +928,8 @@ class StopConditions(BaseModel):
 
     maxTotalGenerations: int
     maxBudget: BudgetLimit
-    targetQuality: Optional[float] = None
-    minDiversity: Optional[float] = None
+    targetQuality: float | None = None
+    minDiversity: float | None = None
 
 
 class EvolutionJob(BaseModel):
@@ -952,13 +951,13 @@ class EvolutionJob(BaseModel):
     currentPhaseIndex: int = 0
     currentGeneration: int = 0
     budgetUsed: BudgetUsage = Field(default_factory=BudgetUsage)
-    bestSopSoFar: Optional[dict[str, Any]] = None
-    createdBy: Optional[str] = None
+    bestSopSoFar: dict[str, Any] | None = None
+    createdBy: str | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
-    startedAt: Optional[str] = None
-    completedAt: Optional[str] = None
-    estimatedCompletionAt: Optional[str] = None
-    config: Optional[dict[str, Any]] = None  # {qdGridConfig, aggregationConfig, stopConditions}
+    startedAt: str | None = None
+    completedAt: str | None = None
+    estimatedCompletionAt: str | None = None
+    config: dict[str, Any] | None = None  # {qdGridConfig, aggregationConfig, stopConditions}
 
     @field_validator("currentPhaseIndex")
     @classmethod
@@ -1008,16 +1007,16 @@ class DomainDependency(BaseModel):
 
     packageId: str
     version: str
-    reason: Optional[str] = None
+    reason: str | None = None
 
 
 class DomainConfig(BaseModel):
     """Domain-specific configuration"""
 
-    defaultEvolutionConfig: Optional[dict[str, Any]] = None
-    aggregationConfig: Optional[dict[str, Any]] = None
-    domainFeatureExtractors: Optional[dict[str, str]] = None
-    recommendedConstraints: Optional[EvolutionConstraints] = None
+    defaultEvolutionConfig: dict[str, Any] | None = None
+    aggregationConfig: dict[str, Any] | None = None
+    domainFeatureExtractors: dict[str, str] | None = None
+    recommendedConstraints: EvolutionConstraints | None = None
 
 
 class DomainPackage(BaseModel):
@@ -1026,23 +1025,23 @@ class DomainPackage(BaseModel):
     id: str
     name: str
     version: str
-    description: Optional[str] = None
+    description: str | None = None
     sopTemplates: list[str]
     promptGenomes: list[str]
     metaConfigs: list[str]
     toolConfigs: list[str]
     metricConfigs: list[str]
     evaluationTasks: list[str]
-    humanFeedbackProtocols: Optional[list[str]] = None
-    customCode: Optional[list[str]] = None
+    humanFeedbackProtocols: list[str] | None = None
+    customCode: list[str] | None = None
     domainConfig: DomainConfig
-    maintainer: Optional[str] = None
-    documentation: Optional[str] = None
-    exampleUseCases: Optional[list[str]] = None
-    tags: Optional[list[str]] = None
+    maintainer: str | None = None
+    documentation: str | None = None
+    exampleUseCases: list[str] | None = None
+    tags: list[str] | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
     updatedAt: str = Field(default_factory=_utc_now_iso)
-    dependencies: Optional[list[DomainDependency]] = None
+    dependencies: list[DomainDependency] | None = None
 
     @field_validator("version")
     @classmethod
@@ -1094,10 +1093,10 @@ class Action(str, Enum):
 class PermissionScope(BaseModel):
     """Scope for permissions"""
 
-    domainIds: Optional[list[str]] = None
-    sopIds: Optional[list[str]] = None
-    resourceIds: Optional[list[str]] = None
-    attributes: Optional[dict[str, Any]] = None
+    domainIds: list[str] | None = None
+    sopIds: list[str] | None = None
+    resourceIds: list[str] | None = None
+    attributes: dict[str, Any] | None = None
 
 
 class PermissionCondition(BaseModel):
@@ -1112,8 +1111,8 @@ class Permission(BaseModel):
 
     resource: ResourceType
     action: Action
-    scope: Optional[PermissionScope] = None
-    conditions: Optional[list[PermissionCondition]] = None
+    scope: PermissionScope | None = None
+    conditions: list[PermissionCondition] | None = None
 
 
 class Role(BaseModel):
@@ -1121,9 +1120,9 @@ class Role(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     permissions: list[Permission]
-    inheritsFrom: Optional[list[str]] = None
+    inheritsFrom: list[str] | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
     updatedAt: str = Field(default_factory=_utc_now_iso)
 
@@ -1146,9 +1145,9 @@ class UserStatus(str, Enum):
 class UserPreferences(BaseModel):
     """User preferences"""
 
-    defaultDomain: Optional[str] = None
-    notificationSettings: Optional[dict[str, bool]] = None
-    uiSettings: Optional[dict[str, Any]] = None
+    defaultDomain: str | None = None
+    notificationSettings: dict[str, bool] | None = None
+    uiSettings: dict[str, Any] | None = None
 
 
 class User(BaseModel):
@@ -1156,22 +1155,22 @@ class User(BaseModel):
 
     id: str
     email: str
-    name: Optional[str] = None
+    name: str | None = None
     authProvider: str = "local"  # "local", "oauth", "saml"
-    hashedPassword: Optional[str] = None
-    oauthProviderId: Optional[str] = None
+    hashedPassword: str | None = None
+    oauthProviderId: str | None = None
     roles: list[str]
     domains: list[str]
     status: UserStatus
     emailVerified: bool = False
     createdAt: str = Field(default_factory=_utc_now_iso)
     updatedAt: str = Field(default_factory=_utc_now_iso)
-    lastLoginAt: Optional[str] = None
-    preferences: Optional[UserPreferences] = None
+    lastLoginAt: str | None = None
+    preferences: UserPreferences | None = None
 
     # Rate limiting and quota fields
     tier: str = "free"  # "free", "standard", "premium", "enterprise"
-    customLimits: Optional[dict[str, int]] = None  # Override limits for specific user
+    customLimits: dict[str, int] | None = None  # Override limits for specific user
     quotaExempt: bool = False  # Admin flag to bypass all limits
 
     @field_validator("email")
@@ -1200,9 +1199,9 @@ class ValidationError(BaseModel):
 
     code: str
     message: str
-    field: Optional[str] = None
+    field: str | None = None
     severity: str  # "ERROR", "WARNING", "INFO"
-    details: Optional[dict[str, Any]] = None
+    details: dict[str, Any] | None = None
 
 
 class ValidationResult(BaseModel):
@@ -1250,10 +1249,10 @@ class SOPDeployment(BaseModel):
     status: DeploymentState
     requested_by: str
     created_at: str = Field(default_factory=_utc_now_iso)
-    deployed_at: Optional[str] = None
-    deactivated_at: Optional[str] = None
-    workflow_instance_id: Optional[str] = None
-    validation_report: Optional[SafetyValidationReport] = None
+    deployed_at: str | None = None
+    deactivated_at: str | None = None
+    workflow_instance_id: str | None = None
+    validation_report: SafetyValidationReport | None = None
     domain_id: str
 
 
@@ -1268,7 +1267,7 @@ class DeploymentVersion(BaseModel):
     deployed_by: str
     baseline_metrics: dict[str, AggregatedMetric]  # Changed from EvaluationVector
     safety_constraints: EvolutionConstraints
-    previous_version_id: Optional[str] = None
+    previous_version_id: str | None = None
     is_rollback: bool = False
     status: str  # "active", "superseded", "rolled_back"
 
@@ -1277,7 +1276,7 @@ class ValidationCheckResult(BaseModel):
     """Result of a single safety validation check"""
 
     passed: bool
-    message: Optional[str] = None
+    message: str | None = None
     requires_approval: bool = False
     warnings: list[str] = Field(default_factory=list)
     details: dict[str, Any] = Field(default_factory=dict)
@@ -1292,7 +1291,7 @@ class SafetyValidationReport(BaseModel):
     overall_passed: bool
     checks: dict[str, ValidationCheckResult]
     requires_human_review: bool
-    approver_notes: Optional[str] = None
+    approver_notes: str | None = None
 
 
 class KillSwitchResult(BaseModel):
@@ -1300,9 +1299,9 @@ class KillSwitchResult(BaseModel):
 
     success: bool
     kill_switch_id: str
-    rollback_success: Optional[bool] = None
-    incident_report_id: Optional[str] = None
-    error: Optional[str] = None
+    rollback_success: bool | None = None
+    incident_report_id: str | None = None
+    error: str | None = None
     message: str
 
 
@@ -1310,11 +1309,11 @@ class RollbackResult(BaseModel):
     """Result of rollback operation"""
 
     success: bool
-    rollback_id: Optional[str] = None
-    previous_version_id: Optional[str] = None
-    new_version_id: Optional[str] = None
-    error: Optional[str] = None
-    message: Optional[str] = None
+    rollback_id: str | None = None
+    previous_version_id: str | None = None
+    new_version_id: str | None = None
+    error: str | None = None
+    message: str | None = None
 
 
 # ============================================================================
@@ -1349,9 +1348,9 @@ class ApprovalDecision(BaseModel):
     stage_id: str
     approver_id: str
     decision: Literal["approve", "reject"]
-    reason: Optional[str] = None
+    reason: str | None = None
     timestamp: str = Field(default_factory=_utc_now_iso)
-    conditions: Optional[list[str]] = None  # Conditional approval terms
+    conditions: list[str] | None = None  # Conditional approval terms
 
 
 class ApprovalStage(BaseModel):
@@ -1362,9 +1361,9 @@ class ApprovalStage(BaseModel):
     approval_type: ApprovalType
     required_roles: list[str]  # Roles that can approve this stage
     min_approvers: int = 1  # Minimum approvals needed
-    timeout_hours: Optional[int] = None  # Auto-timeout (None = no timeout)
+    timeout_hours: int | None = None  # Auto-timeout (None = no timeout)
     escalation_roles: list[str] = Field(default_factory=list)  # Escalation chain on timeout
-    conditions: Optional[dict[str, Any]] = None  # Conditions to trigger this stage
+    conditions: dict[str, Any] | None = None  # Conditions to trigger this stage
     order: int  # Execution order (0-indexed)
 
 
@@ -1373,7 +1372,7 @@ class ApprovalWorkflow(BaseModel):
 
     id: str
     name: str
-    description: Optional[str] = None
+    description: str | None = None
     environment: str  # Which environment this workflow applies to
     stages: list[ApprovalStage]
     created_at: str = Field(default_factory=_utc_now_iso)
@@ -1397,7 +1396,7 @@ class ApprovalWorkflowInstance(BaseModel):
     stage_statuses: dict[str, ApprovalStageStatus]  # stage_id -> status
     stage_decisions: dict[str, list[ApprovalDecision]]  # stage_id -> list of decisions
     started_at: str = Field(default_factory=_utc_now_iso)
-    completed_at: Optional[str] = None
+    completed_at: str | None = None
     overall_status: Literal["pending", "approved", "rejected", "timed_out", "escalated"] = (
         "pending"
     )
@@ -1451,8 +1450,8 @@ class PromptFeedback(BaseModel):
     section_id: str
     section_content: str
     critique: str  # Detailed analysis of what went wrong
-    failure_pattern: Optional[FailurePattern] = None
-    suggested_improvement: Optional[str] = None
+    failure_pattern: FailurePattern | None = None
+    suggested_improvement: str | None = None
     confidence: float = Field(ge=0.0, le=1.0, default=0.5)
 
 
@@ -1513,12 +1512,12 @@ class FeedbackArtifact(BaseModel):
 
     source_type: str = Field(description="Source: llm_judge, trace, metric, user")
     role_id: str = Field(description="Role this feedback applies to")
-    metric_id: Optional[str] = Field(default=None, description="Metric ID if from evaluation")
+    metric_id: str | None = Field(default=None, description="Metric ID if from evaluation")
     critique: str = Field(description="Description of the issue")
     severity: float = Field(ge=0.0, le=1.0, default=0.5, description="Severity 0-1")
-    failure_pattern: Optional[FailurePattern] = Field(default=None, description="Classified failure pattern")
-    suggested_fix: Optional[str] = Field(default=None, description="Suggested improvement")
-    trace_ref: Optional[str] = Field(default=None, description="Reference to execution trace")
+    failure_pattern: FailurePattern | None = Field(default=None, description="Classified failure pattern")
+    suggested_fix: str | None = Field(default=None, description="Suggested improvement")
+    trace_ref: str | None = Field(default=None, description="Reference to execution trace")
 
 
 class ConstraintViolation(BaseModel):
@@ -1526,7 +1525,7 @@ class ConstraintViolation(BaseModel):
 
     constraint_type: str = Field(description="Type: must_not_change, max_length, keyword_required")
     violation_description: str = Field(description="Human-readable description")
-    section_id: Optional[str] = Field(default=None, description="Section ID if applicable")
+    section_id: str | None = Field(default=None, description="Section ID if applicable")
     role_id: str = Field(description="Role ID where violation occurred")
     severity: str = Field(default="error", description="error or warning")
 

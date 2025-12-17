@@ -1,6 +1,6 @@
 """Interactive Plotly charts for HTML reports and blog posts."""
 
-from typing import Any, Optional
+from typing import Any
 
 import plotly.graph_objects as go
 
@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 def radar_chart(
     metrics: dict[str, float],
     title: str = "SIARE Performance",
-    baseline_metrics: Optional[dict[str, float]] = None,
+    baseline_metrics: dict[str, float] | None = None,
 ) -> go.Figure:
     """Generate radar chart comparing metrics against baseline.
 
@@ -66,7 +66,7 @@ def radar_chart(
 def beir_comparison_bar(
     results: dict[str, dict[str, float]],
     metric: str = "ndcg@10",
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> go.Figure:
     """Generate bar chart comparing metrics across BEIR datasets.
 
@@ -107,7 +107,7 @@ def beir_comparison_bar(
 def evolution_progress_chart(
     generations: list[dict[str, float]],
     metric: str = "accuracy",
-    title: Optional[str] = None,
+    title: str | None = None,
 ) -> go.Figure:
     """Generate evolution progress chart showing improvement over generations.
 

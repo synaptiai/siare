@@ -6,8 +6,7 @@ Supports BEIR format and custom document collections.
 
 import logging
 from pathlib import Path
-from typing import Any, ClassVar, Optional
-
+from typing import Any, ClassVar
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class CorpusLoader:
 
     def __init__(
         self,
-        persist_dir: Optional[str] = None,
+        persist_dir: str | None = None,
         embedding_model: str = DEFAULT_EMBEDDING_MODEL,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         chunk_overlap: int = DEFAULT_CHUNK_OVERLAP,
@@ -89,7 +88,7 @@ class CorpusLoader:
             )
 
         # Lazy-load embedding model
-        self._embedding_model: Optional[SentenceTransformer] = None
+        self._embedding_model: SentenceTransformer | None = None
 
     def _get_embedding_model(self) -> "SentenceTransformer":
         """Lazy-load the embedding model."""

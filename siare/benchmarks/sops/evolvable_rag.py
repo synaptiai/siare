@@ -21,7 +21,6 @@ from siare.core.models import (
     RolePrompt,
 )
 
-
 # Parameter bounds for evolution - Director can mutate within these ranges
 EVOLVABLE_PARAM_BOUNDS: dict[str, dict[str, Any]] = {
     "top_k": {

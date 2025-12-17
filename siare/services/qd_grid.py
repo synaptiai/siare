@@ -5,7 +5,7 @@ import re
 import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +19,6 @@ from siare.core.models import (
     SOPGene,
 )
 from siare.utils.sampling import quality_weighted_sample
-
 
 logger = logging.getLogger(__name__)
 
@@ -594,7 +593,7 @@ class QDGridManager:
 
         return was_added, cell_id
 
-    def get_elite(self, cell_id: str) -> Optional[dict[str, Any]]:
+    def get_elite(self, cell_id: str) -> dict[str, Any] | None:
         """Get elite SOP for a specific cell"""
         return self.cells.get(cell_id)
 
@@ -732,7 +731,7 @@ class QDGridManager:
             min_q, quality_range = 0.0, 1.0
 
         for elite in elites:
-            cell_id: Optional[str] = elite.get("cellId")
+            cell_id: str | None = elite.get("cellId")
             if not cell_id:
                 # Backward compatibility: construct cell ID from elite data
                 # This matches the format from add_to_grid()

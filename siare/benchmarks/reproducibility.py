@@ -13,8 +13,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +242,7 @@ class ReproducibilityTracker:
     def compute_directory_hash(
         path: str,
         algorithm: str = "sha256",
-        include_patterns: Optional[list[str]] = None,
+        include_patterns: list[str] | None = None,
     ) -> str:
         """Compute hash of all files in a directory.
 
@@ -295,8 +294,8 @@ class ReproducibilityTracker:
         results: dict[str, Any],
         config: dict[str, Any],
         output_path: str,
-        dataset_path: Optional[str] = None,
-        environment: Optional[EnvironmentSnapshot] = None,
+        dataset_path: str | None = None,
+        environment: EnvironmentSnapshot | None = None,
     ) -> None:
         """Save reproducibility manifest to JSON file.
 

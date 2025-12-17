@@ -28,15 +28,15 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 def setup_corpus(
     dataset_name: str = "frames",
-    max_articles: Optional[int] = None,
-    persist_dir: Optional[str] = None,
+    max_articles: int | None = None,
+    persist_dir: str | None = None,
 ) -> str:
     """Load corpus into vector store.
 
@@ -84,7 +84,7 @@ def run_baselines(
     dataset: Any,
     index_name: str,
     llm_provider: Any = None,
-    tool_adapters: Optional[dict[str, Any]] = None,
+    tool_adapters: dict[str, Any] | None = None,
     n_random_samples: int = 20,
     random_seed: int = 42,
 ) -> dict[str, dict[str, float]]:
@@ -231,7 +231,10 @@ def run_evolution(
     """
     try:
         from siare.benchmarks.comparison.baselines import create_static_baseline
-        from siare.benchmarks.evolution_runner import EvolutionBenchmarkRunner, EvolutionBenchmarkConfig
+        from siare.benchmarks.evolution_runner import (
+            EvolutionBenchmarkConfig,
+            EvolutionBenchmarkRunner,
+        )
         from siare.providers.ollama_provider import OllamaProvider
 
         logger.info("Starting evolution from poor baseline...")

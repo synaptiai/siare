@@ -3,11 +3,11 @@
 import logging
 import random
 import time
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from siare.core.models import RetryConfig
 from siare.services.error_classifier import ErrorClassifier
-
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class RetryHandler:
         jitter=False,
     )
 
-    def __init__(self, error_classifier: Optional[ErrorClassifier] = None):
+    def __init__(self, error_classifier: ErrorClassifier | None = None):
         """
         Initialize retry handler
 
@@ -100,7 +100,7 @@ class RetryHandler:
             RetryExhausted: If all retry attempts fail
             Exception: If error is PERMANENT (fail fast)
         """
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
 
         for attempt in range(1, retry_config.max_attempts + 1):
             try:
@@ -186,7 +186,7 @@ class RetryHandler:
         """
         import asyncio
 
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
 
         for attempt in range(1, retry_config.max_attempts + 1):
             try:

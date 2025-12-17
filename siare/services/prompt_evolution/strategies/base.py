@@ -6,7 +6,7 @@ Follows the pattern established in siare/services/selection/strategies.py.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from siare.core.models import (
     Diagnosis,
@@ -68,8 +68,8 @@ class BasePromptOptimizationStrategy(ABC):
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompts: Optional[dict[str, ParsedPrompt]] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        parsed_prompts: dict[str, ParsedPrompt] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> PromptEvolutionResult:
         """
         Apply optimization strategy to evolve prompts.
@@ -102,7 +102,7 @@ class BasePromptOptimizationStrategy(ABC):
         self,
         original_content: str,
         new_content: str,
-        must_not_change: Optional[list[str]] = None,
+        must_not_change: list[str] | None = None,
     ) -> list[str]:
         """
         Validate that new content respects constraints.

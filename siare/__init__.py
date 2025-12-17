@@ -15,20 +15,6 @@ Example:
     >>> improved_config = await director.mutate_sop(config, diagnosis)
 """
 
-from siare.core.models import (
-    Diagnosis,
-    EvaluationVector,
-    ExecutionTrace,
-    GraphEdge,
-    MetricConfig,
-    MutationType,
-    ProcessConfig,
-    PromptGenome,
-    Role,
-    RoleOutput,
-    SOPGene,
-    Task,
-)
 from siare.core.hooks import (
     EvaluationHooks,
     EvolutionHooks,
@@ -38,6 +24,18 @@ from siare.core.hooks import (
     HookRunner,
     LLMHooks,
     StorageHooks,
+)
+from siare.core.models import (
+    Diagnosis,
+    EvaluationVector,
+    GraphEdge,
+    MetricConfig,
+    MutationType,
+    ProcessConfig,
+    PromptGenome,
+    Role,
+    SOPGene,
+    Task,
 )
 
 __version__ = "1.0.0"
@@ -56,8 +54,6 @@ __all__ = [
     "PromptGenome",
     "Task",
     "EvaluationVector",
-    "ExecutionTrace",
-    "RoleOutput",
     "Diagnosis",
     "MutationType",
     "MetricConfig",

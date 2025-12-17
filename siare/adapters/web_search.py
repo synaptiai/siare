@@ -3,13 +3,12 @@
 import logging
 from collections import deque
 from time import sleep, time
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 import requests
 
 from siare.adapters.base import ToolAdapter, register_adapter
-
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +50,7 @@ class WebSearchAdapter(ToolAdapter):
         self.rate_limit = config.get("rate_limit", 10)
         self.provider_config = config.get("provider_config", {})
 
-        self.session: Optional[requests.Session] = None
+        self.session: requests.Session | None = None
         self.request_times: deque[float] = deque(maxlen=self.rate_limit)
 
     def initialize(self) -> None:
@@ -199,12 +198,12 @@ class WebSearchAdapter(ToolAdapter):
         try:
             result = urlparse(url)
             return all([result.scheme, result.netloc])
-        except Exception as e:  # noqa: BLE001 - Catch-all with logging for URL validation
+        except Exception as e:
             logger.debug(f"URL validation failed: {e}")
             return False
 
     def _search_google(
-        self, query: str, max_results: int, filter_date: Optional[str], safe_search: bool
+        self, query: str, max_results: int, filter_date: str | None, safe_search: bool
     ) -> list[dict[str, Any]]:
         """Search using Google Custom Search API"""
 
@@ -254,7 +253,7 @@ class WebSearchAdapter(ToolAdapter):
         return results
 
     def _search_bing(
-        self, query: str, max_results: int, filter_date: Optional[str], safe_search: bool
+        self, query: str, max_results: int, filter_date: str | None, safe_search: bool
     ) -> list[dict[str, Any]]:
         """Search using Bing Search API"""
 
@@ -299,7 +298,9 @@ class WebSearchAdapter(ToolAdapter):
 
         try:
             from duckduckgo_search import DDGS  # type: ignore[import-untyped]
-            from duckduckgo_search.exceptions import DuckDuckGoSearchException  # type: ignore[import-untyped]
+            from duckduckgo_search.exceptions import (
+                DuckDuckGoSearchException,  # type: ignore[import-untyped]
+            )
 
             # Retry with exponential backoff for rate limits
             max_retries = 3
@@ -341,7 +342,7 @@ class WebSearchAdapter(ToolAdapter):
             raise ImportError("DuckDuckGo search requires: pip install duckduckgo-search")
 
     def _search_serper(
-        self, query: str, max_results: int, filter_date: Optional[str]
+        self, query: str, max_results: int, filter_date: str | None
     ) -> list[dict[str, Any]]:
         """Search using Serper.dev (Google Search API)"""
 

@@ -6,10 +6,8 @@ reasoning over multiple documents.
 See: https://hotpotqa.github.io/
 """
 import logging
-from typing import Optional
 
 from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,7 @@ class HotpotQADataset(BenchmarkDataset):
     def __init__(
         self,
         split: str = "validation",
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
         difficulty: str = "distractor",
     ) -> None:
         """Initialize HotpotQA dataset.
@@ -76,7 +74,7 @@ class HotpotQADataset(BenchmarkDataset):
                 # Extract supporting facts as context
                 context = []
                 for title, sentences in zip(  # type: ignore[arg-type]
-                    item["context"]["title"], item["context"]["sentences"]  # type: ignore[index]
+                    item["context"]["title"], item["context"]["sentences"], strict=False  # type: ignore[index]
                 ):
                     context.append(f"{title}: {' '.join(sentences)}")  # type: ignore[arg-type]
 

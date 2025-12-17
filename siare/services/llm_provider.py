@@ -3,8 +3,7 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Literal, Optional, cast
-
+from typing import Any, Literal, cast
 
 try:
     import openai
@@ -37,7 +36,7 @@ class LLMResponse:
     model: str
     usage: dict[str, int]  # {prompt_tokens, completion_tokens, total_tokens}
     finish_reason: str
-    raw_response: Optional[Any] = None
+    raw_response: Any | None = None
     cost: float = 0.0  # Estimated cost in USD
 
 
@@ -115,7 +114,7 @@ class LLMProvider(ABC):
         messages: list[LLMMessage],
         model: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
         """
@@ -140,7 +139,7 @@ class LLMProvider(ABC):
 class OpenAIProvider(LLMProvider):
     """OpenAI API provider"""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize OpenAI provider
 
@@ -179,7 +178,7 @@ class OpenAIProvider(LLMProvider):
         messages: list[LLMMessage],
         model: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
         """Generate completion using OpenAI API"""
@@ -246,7 +245,7 @@ class OpenAIProvider(LLMProvider):
         if hasattr(self, "client") and self.client:
             try:
                 self.client.close()
-            except Exception:  # noqa: BLE001 - Ignore all errors during cleanup
+            except Exception:
                 pass  # Ignore errors during cleanup
 
     def __del__(self) -> None:
@@ -257,7 +256,7 @@ class OpenAIProvider(LLMProvider):
 class AnthropicProvider(LLMProvider):
     """Anthropic API provider"""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize Anthropic provider
 
@@ -289,13 +288,13 @@ class AnthropicProvider(LLMProvider):
         messages: list[LLMMessage],
         model: str,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> LLMResponse:
         """Generate completion using Anthropic API"""
 
         # Separate system message
-        system_message: Optional[str] = None
+        system_message: str | None = None
         anthropic_messages: list[dict[str, Any]] = []
 
         for msg in messages:
@@ -351,7 +350,7 @@ class AnthropicProvider(LLMProvider):
         if hasattr(self, "client") and self.client:
             try:
                 self.client.close()
-            except Exception:  # noqa: BLE001 - Ignore all errors during cleanup
+            except Exception:
                 pass  # Ignore errors during cleanup
 
     def __del__(self) -> None:
@@ -365,7 +364,7 @@ class LLMProviderFactory:
     @staticmethod
     def create(
         provider_type: Literal["openai", "anthropic", "ollama", "mock"],
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         **kwargs: Any,
     ) -> LLMProvider:
         """

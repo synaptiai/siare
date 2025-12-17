@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -16,7 +16,6 @@ from siare.core.models import (
 )
 from siare.services.retry_handler import RetryHandler
 from siare.utils.file_utils import atomic_write_json
-
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +33,8 @@ class GenePool:
 
     def __init__(
         self,
-        storage_path: Optional[str] = None,
-        retry_handler: Optional[RetryHandler] = None,
+        storage_path: str | None = None,
+        retry_handler: RetryHandler | None = None,
     ):
         """
         Initialize Gene Pool
@@ -77,7 +76,7 @@ class GenePool:
     # SOPGene Management
     # =========================================================================
 
-    def add_sop_gene(self, gene: SOPGene, generation: Optional[int] = None) -> None:
+    def add_sop_gene(self, gene: SOPGene, generation: int | None = None) -> None:
         """
         Add a SOPGene to the pool with generation tracking
 
@@ -115,7 +114,7 @@ class GenePool:
 
         self._persist()
 
-    def get_sop_gene(self, sop_id: str, version: Optional[str] = None) -> Optional[SOPGene]:
+    def get_sop_gene(self, sop_id: str, version: str | None = None) -> SOPGene | None:
         """
         Get a SOPGene
 
@@ -142,9 +141,9 @@ class GenePool:
     def list_sop_genes(
         self,
         pareto_optimal_only: bool = False,
-        pareto_set_id: Optional[str] = None,
-        tags: Optional[list[str]] = None,
-        min_quality: Optional[float] = None,
+        pareto_set_id: str | None = None,
+        tags: list[str] | None = None,
+        min_quality: float | None = None,
     ) -> list[SOPGene]:
         """
         List SOPGenes with optional filters
@@ -188,7 +187,7 @@ class GenePool:
         return genes
 
     def get_pareto_frontier(
-        self, metric_ids: list[str], pareto_set_id: Optional[str] = None
+        self, metric_ids: list[str], pareto_set_id: str | None = None
     ) -> list[SOPGene]:
         """
         Get Pareto frontier for specified metrics
@@ -214,7 +213,7 @@ class GenePool:
     def update_pareto_frontier(
         self,
         metric_ids: list[str],
-        pareto_set_id: Optional[str] = None,
+        pareto_set_id: str | None = None,
         maximize_all: bool = True,
     ) -> int:
         """
@@ -249,7 +248,7 @@ class GenePool:
             # Skip if missing metrics
             if any(
                 m == 0.0 and m_id not in gene.aggregatedMetrics
-                for m, m_id in zip(metrics, metric_ids)
+                for m, m_id in zip(metrics, metric_ids, strict=False)
             ):
                 continue
 
@@ -297,8 +296,8 @@ class GenePool:
         self,
         metrics: NDArray[np.float64],
         maximize: bool = True,
-        gene_refs: Optional[list[tuple[str, str]]] = None,
-        metric_ids: Optional[list[str]] = None,
+        gene_refs: list[tuple[str, str]] | None = None,
+        metric_ids: list[str] | None = None,
         mean_tolerance: float = 0.01,
         use_ci_tiebreaker: bool = True,
     ) -> list[int]:
@@ -423,7 +422,7 @@ class GenePool:
 
         self._persist()
 
-    def get_meta_gene(self, meta_id: str, version: Optional[str] = None) -> Optional[MetaGene]:
+    def get_meta_gene(self, meta_id: str, version: str | None = None) -> MetaGene | None:
         """Get a MetaGene"""
         if meta_id not in self._meta_genes:
             return None
@@ -587,7 +586,7 @@ class GenePool:
         return genes
 
     def get_genes_from_recent_generations(
-        self, lookback: int, min_quality: Optional[float] = None
+        self, lookback: int, min_quality: float | None = None
     ) -> list[SOPGene]:
         """
         Get genes from last N generations
@@ -711,7 +710,7 @@ class GenePool:
 
     def _load_json_file(
         self, file_path: Path, operation_name: str
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Load JSON file with retry handling.
 
         Args:
@@ -753,7 +752,7 @@ class GenePool:
                 try:
                     self._sop_genes[sop_id][version] = SOPGene(**gene_data)
                     loaded_count += 1
-                except Exception as e:  # noqa: BLE001 - Graceful degradation
+                except Exception as e:
                     error_count += 1
                     logger.warning(f"Failed to load SOPGene {sop_id}@{version}: {e}")
 
@@ -777,7 +776,7 @@ class GenePool:
                 try:
                     self._meta_genes[meta_id][version] = MetaGene(**gene_data)
                     loaded_count += 1
-                except Exception as e:  # noqa: BLE001 - Graceful degradation
+                except Exception as e:
                     error_count += 1
                     logger.warning(f"Failed to load MetaGene {meta_id}@{version}: {e}")
 
@@ -795,7 +794,7 @@ class GenePool:
         for set_id, genes_list in data.items():
             try:
                 self._pareto_sets[set_id] = {tuple(g) for g in genes_list}
-            except Exception as e:  # noqa: BLE001 - Graceful degradation
+            except Exception as e:
                 logger.warning(f"Failed to load Pareto set {set_id}: {e}")
 
         return len(self._pareto_sets)
@@ -841,7 +840,7 @@ class GenePool:
                 if meta_data:
                     loaded, errors = self._load_meta_genes_from_data(meta_data)
                     logger.info(f"Loaded {loaded} MetaGenes ({errors} errors)")
-            except Exception as e:  # noqa: BLE001 - Non-critical data
+            except Exception as e:
                 logger.warning(f"Failed to load meta_genes.json: {e}")
 
             # Load Pareto sets (non-critical)
@@ -852,7 +851,7 @@ class GenePool:
                 if pareto_data:
                     count = self._load_pareto_sets_from_data(pareto_data)
                     logger.info(f"Loaded {count} Pareto sets")
-            except Exception as e:  # noqa: BLE001 - Non-critical data
+            except Exception as e:
                 logger.warning(f"Failed to load pareto_sets.json: {e}")
 
             # Load stats (non-critical)
@@ -863,7 +862,7 @@ class GenePool:
                 if stats_data:
                     self.stats = stats_data
                     logger.debug(f"Loaded stats: {self.stats}")
-            except Exception as e:  # noqa: BLE001 - Non-critical data
+            except Exception as e:
                 logger.warning(f"Failed to load stats.json: {e}")
 
             # Validate loaded state

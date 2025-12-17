@@ -12,4 +12,4 @@ try:
 except ImportError:
     CorpusIndexManager = None  # type: ignore
 
-__all__ = ["CorpusLoader", "WikipediaCorpusLoader", "CorpusIndexManager"]
+__all__ = ["CorpusIndexManager", "CorpusLoader", "WikipediaCorpusLoader"]

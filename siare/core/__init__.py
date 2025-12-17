@@ -1,19 +1,5 @@
 """SIARE Core - Data models, hooks, and configuration."""
 
-from siare.core.models import (
-    Diagnosis,
-    EvaluationVector,
-    ExecutionTrace,
-    GraphEdge,
-    MetricConfig,
-    MutationType,
-    ProcessConfig,
-    PromptGenome,
-    Role,
-    RoleOutput,
-    SOPGene,
-    Task,
-)
 from siare.core.hooks import (
     EvaluationHooks,
     EvolutionHooks,
@@ -29,6 +15,18 @@ from siare.core.hooks import (
     fire_llm_hook,
     fire_storage_hook,
 )
+from siare.core.models import (
+    Diagnosis,
+    EvaluationVector,
+    GraphEdge,
+    MetricConfig,
+    MutationType,
+    ProcessConfig,
+    PromptGenome,
+    Role,
+    SOPGene,
+    Task,
+)
 
 __all__ = [
     # Models
@@ -38,8 +36,6 @@ __all__ = [
     "PromptGenome",
     "Task",
     "EvaluationVector",
-    "ExecutionTrace",
-    "RoleOutput",
     "Diagnosis",
     "MutationType",
     "MetricConfig",

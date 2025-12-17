@@ -19,7 +19,6 @@ from siare.core.models import (
     RolePrompt,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +46,7 @@ class BasePromptSectionParser(ABC):
     def reconstruct(
         self,
         parsed: ParsedPrompt,
-        section_updates: Optional[dict[str, str]] = None,
+        section_updates: dict[str, str] | None = None,
     ) -> str:
         """
         Reconstruct prompt from sections with optional updates.
@@ -216,7 +215,7 @@ class MarkdownSectionParser(BasePromptSectionParser):
     def reconstruct(
         self,
         parsed: ParsedPrompt,
-        section_updates: Optional[dict[str, str]] = None,
+        section_updates: dict[str, str] | None = None,
     ) -> str:
         """
         Reconstruct prompt from sections.
@@ -359,7 +358,7 @@ class LLMSectionParser(BasePromptSectionParser):
             llm_provider: LLM provider for section identification
             model: Model to use
         """
-        self.llm_provider: Optional[LLMProvider] = llm_provider
+        self.llm_provider: LLMProvider | None = llm_provider
         self.model = model
         self._markdown_parser = MarkdownSectionParser()
 
@@ -391,7 +390,7 @@ class LLMSectionParser(BasePromptSectionParser):
     def reconstruct(
         self,
         parsed: ParsedPrompt,
-        section_updates: Optional[dict[str, str]] = None,
+        section_updates: dict[str, str] | None = None,
     ) -> str:
         """Delegate to markdown parser for reconstruction"""
         return self._markdown_parser.reconstruct(parsed, section_updates)
@@ -476,7 +475,7 @@ Rules:
 
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse LLM response as JSON: {e}")
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             logger.warning(f"LLM parsing failed: {e}")
 
         return fallback_parsed

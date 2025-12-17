@@ -24,7 +24,6 @@ from siare.benchmarks.runner import BenchmarkRunner
 from siare.benchmarks.sops import create_benchmark_genome, create_benchmark_sop
 from siare.providers.ollama_provider import OllamaProvider
 
-
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 

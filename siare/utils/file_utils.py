@@ -10,7 +10,6 @@ from typing import Any
 
 from siare.services.retry_handler import RetryHandler
 
-
 logger = logging.getLogger(__name__)
 
 

@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from siare.core.models import (
     DomainPackage,
@@ -23,7 +23,7 @@ class ConfigStore:
     For Production: Replace with proper database (PostgreSQL + S3)
     """
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         """
         Initialize config store
 
@@ -56,7 +56,7 @@ class ConfigStore:
         self._sops[sop.id][sop.version] = sop
         self._persist()
 
-    def get_sop(self, sop_id: str, version: Optional[str] = None) -> Optional[ProcessConfig]:
+    def get_sop(self, sop_id: str, version: str | None = None) -> ProcessConfig | None:
         """
         Get a ProcessConfig
 
@@ -80,7 +80,7 @@ class ConfigStore:
         latest_version = max(versions.keys(), key=self._version_key)
         return versions[latest_version]
 
-    def list_sops(self, domain: Optional[str] = None) -> list[tuple[str, str]]:
+    def list_sops(self, domain: str | None = None) -> list[tuple[str, str]]:
         """
         List all SOPs
 
@@ -115,8 +115,8 @@ class ConfigStore:
         self._persist()
 
     def get_prompt_genome(
-        self, genome_id: str, version: Optional[str] = None
-    ) -> Optional[PromptGenome]:
+        self, genome_id: str, version: str | None = None
+    ) -> PromptGenome | None:
         """Get a PromptGenome"""
         if genome_id not in self._prompt_genomes:
             return None
@@ -150,7 +150,7 @@ class ConfigStore:
         self._meta_configs[meta.id][meta.version] = meta
         self._persist()
 
-    def get_meta_config(self, meta_id: str, version: Optional[str] = None) -> Optional[MetaConfig]:
+    def get_meta_config(self, meta_id: str, version: str | None = None) -> MetaConfig | None:
         """Get a MetaConfig"""
         if meta_id not in self._meta_configs:
             return None
@@ -174,7 +174,7 @@ class ConfigStore:
         self._tools[tool.id] = tool
         self._persist()
 
-    def get_tool(self, tool_id: str) -> Optional[ToolConfig]:
+    def get_tool(self, tool_id: str) -> ToolConfig | None:
         """Get a ToolConfig"""
         return self._tools.get(tool_id)
 
@@ -191,7 +191,7 @@ class ConfigStore:
         self._metrics[metric.id] = metric
         self._persist()
 
-    def get_metric(self, metric_id: str) -> Optional[MetricConfig]:
+    def get_metric(self, metric_id: str) -> MetricConfig | None:
         """Get a MetricConfig"""
         return self._metrics.get(metric_id)
 
@@ -210,7 +210,7 @@ class ConfigStore:
         self._task_sets[task_set.id][task_set.version] = task_set
         self._persist()
 
-    def get_task_set(self, task_set_id: str, version: Optional[str] = None) -> Optional[TaskSet]:
+    def get_task_set(self, task_set_id: str, version: str | None = None) -> TaskSet | None:
         """Get a TaskSet"""
         if task_set_id not in self._task_sets:
             return None
@@ -237,8 +237,8 @@ class ConfigStore:
         self._persist()
 
     def get_domain_package(
-        self, package_id: str, version: Optional[str] = None
-    ) -> Optional[DomainPackage]:
+        self, package_id: str, version: str | None = None
+    ) -> DomainPackage | None:
         """Get a DomainPackage"""
         if package_id not in self._domain_packages:
             return None

@@ -1,6 +1,5 @@
 """Static Matplotlib charts for papers and publications."""
 
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +8,7 @@ import numpy as np
 def radar_chart_static(
     metrics: dict[str, float],
     output_path: str,
-    baseline_metrics: Optional[dict[str, float]] = None,
+    baseline_metrics: dict[str, float] | None = None,
     title: str = "SIARE Performance",
     dpi: int = 300,
 ) -> None:
@@ -70,7 +69,7 @@ def beir_comparison_bar_static(
     results: dict[str, dict[str, float]],
     output_path: str,
     metric: str = "ndcg@10",
-    title: Optional[str] = None,
+    title: str | None = None,
     dpi: int = 300,
 ) -> None:
     """Generate static bar chart for papers.
@@ -90,7 +89,7 @@ def beir_comparison_bar_static(
     bars = ax.bar(datasets, scores, color="#1f77b4", edgecolor="black")
 
     # Add value labels on bars
-    for bar, score in zip(bars, scores):
+    for bar, score in zip(bars, scores, strict=False):
         height = bar.get_height()
         ax.text(
             bar.get_x() + bar.get_width() / 2,
@@ -116,7 +115,7 @@ def evolution_progress_static(
     generations: list[dict[str, float]],
     output_path: str,
     metric: str = "accuracy",
-    title: Optional[str] = None,
+    title: str | None = None,
     dpi: int = 300,
 ) -> None:
     """Generate static evolution progress chart for papers.

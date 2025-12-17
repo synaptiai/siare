@@ -17,7 +17,6 @@ from siare.benchmarks.metrics.integration import (
 )
 from siare.benchmarks.runner import BenchmarkResults, BenchmarkRunner, SampleResult
 
-
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
     from siare.benchmarks.corpus.loader import CorpusLoader
@@ -70,9 +69,9 @@ class RAGBenchmarkRunner(BenchmarkRunner):
         sop: Optional["ProcessConfig"] = None,
         genome: Optional["PromptGenome"] = None,
         llm_provider: Optional["LLMProvider"] = None,
-        model_fallback_cascade: Optional[list[str]] = None,
-        retrieval_k_values: Optional[list[int]] = None,
-        tool_adapters: Optional[dict[str, Any]] = None,
+        model_fallback_cascade: list[str] | None = None,
+        retrieval_k_values: list[int] | None = None,
+        tool_adapters: dict[str, Any] | None = None,
     ) -> None:
         """Initialize RAG benchmark runner.
 
@@ -125,8 +124,8 @@ class RAGBenchmarkRunner(BenchmarkRunner):
     def run_with_retrieval_metrics(
         self,
         dataset: "BenchmarkDataset",
-        qrels: Optional[dict[str, dict[str, int]]] = None,
-        max_samples: Optional[int] = None,
+        qrels: dict[str, dict[str, int]] | None = None,
+        max_samples: int | None = None,
     ) -> RAGBenchmarkResults:
         """Run benchmark with retrieval metrics tracking.
 

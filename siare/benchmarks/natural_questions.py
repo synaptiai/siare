@@ -6,10 +6,8 @@ containing real user questions with answers from Wikipedia.
 See: https://ai.google.com/research/NaturalQuestions
 """
 import logging
-from typing import Optional
 
 from siare.benchmarks.base import BenchmarkDataset, BenchmarkSample
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,7 @@ class NaturalQuestionsDataset(BenchmarkDataset):
     def __init__(
         self,
         split: str = "validation",
-        max_samples: Optional[int] = None,
+        max_samples: int | None = None,
     ) -> None:
         """Initialize Natural Questions dataset.
 

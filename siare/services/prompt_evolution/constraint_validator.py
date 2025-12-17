@@ -13,7 +13,6 @@ from siare.core.models import (
     SectionMutation,
 )
 
-
 logger = logging.getLogger(__name__)
 
 # Constants

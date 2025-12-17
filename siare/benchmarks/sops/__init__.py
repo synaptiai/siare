@@ -29,7 +29,6 @@ from siare.benchmarks.sops.simple_qa import (
     create_benchmark_sop,
 )
 
-
 __all__ = [
     "create_benchmark_genome",
     "create_benchmark_sop",

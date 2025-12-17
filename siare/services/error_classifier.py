@@ -2,10 +2,9 @@
 
 import logging
 import traceback
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 from siare.core.models import ErrorCategory, ErrorContext, ErrorSeverity
-
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,7 @@ class ErrorClassifier:
         exception: Exception,
         component: str,
         operation: str,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ErrorContext:
         """
         Classify an exception into an ErrorContext
@@ -226,7 +225,7 @@ class ErrorClassifier:
         component: str,
         operation: str,
         exception_type: str = "Exception",
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ErrorContext:
         """
         Classify error from message string (when exception object not available)

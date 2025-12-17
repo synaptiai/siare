@@ -31,7 +31,6 @@ import uuid
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-
 if TYPE_CHECKING:
     from siare.core.models import (
         Diagnosis,

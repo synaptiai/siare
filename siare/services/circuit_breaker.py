@@ -3,10 +3,10 @@
 import logging
 import threading
 import time
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from siare.core.models import CircuitBreakerConfig, CircuitState
-
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class CircuitBreaker:
         self.state: CircuitState = CircuitState.CLOSED
         self.failure_count: int = 0
         self.success_count: int = 0
-        self.last_failure_time: Optional[float] = None
+        self.last_failure_time: float | None = None
 
         # Thread safety
         self._lock = threading.Lock()
@@ -331,7 +331,7 @@ class CircuitBreakerRegistry:
     def get_or_create(
         self,
         name: str,
-        config: Optional[CircuitBreakerConfig] = None,
+        config: CircuitBreakerConfig | None = None,
     ) -> CircuitBreaker:
         """
         Get existing circuit breaker or create new one
@@ -352,7 +352,7 @@ class CircuitBreakerRegistry:
 
             return self._breakers[name]
 
-    def get(self, name: str) -> Optional[CircuitBreaker]:
+    def get(self, name: str) -> CircuitBreaker | None:
         """
         Get existing circuit breaker
 
@@ -383,7 +383,7 @@ class CircuitBreakerRegistry:
 
 
 # Global registry instance
-_global_registry: Optional[CircuitBreakerRegistry] = None
+_global_registry: CircuitBreakerRegistry | None = None
 
 
 def get_circuit_breaker_registry() -> CircuitBreakerRegistry:

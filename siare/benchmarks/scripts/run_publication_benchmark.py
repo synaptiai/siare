@@ -22,10 +22,10 @@ Tier 3 (Publication): Publication-grade with FDR correction, ablations, learning
 import argparse
 import logging
 import sys
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Optional
-
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from siare.benchmarks.base import BenchmarkDataset
@@ -80,7 +80,7 @@ def check_ollama_health(model: str) -> bool:
         return False
 
 
-def load_dataset(name: str, max_samples: Optional[int] = None) -> "BenchmarkDataset":
+def load_dataset(name: str, max_samples: int | None = None) -> "BenchmarkDataset":
     """Load benchmark dataset by name.
 
     Args:
@@ -162,7 +162,7 @@ def run_tier2_benchmark(
     baselines: dict[str, tuple["ProcessConfig", "PromptGenome"]],
     n_runs: int,
     confidence_level: float,
-    max_samples: Optional[int],
+    max_samples: int | None,
     random_seed: int,
 ) -> "QualityGateResult":
     """Run Tier 2 quality gate benchmark.
@@ -214,7 +214,7 @@ def run_tier3_benchmark(
     ablations: dict[str, tuple["ProcessConfig", "PromptGenome"]],
     n_runs: int,
     confidence_level: float,
-    max_samples: Optional[int],
+    max_samples: int | None,
     random_seed: int,
     evolution_history: list["SOPGene"],
 ) -> "PublicationBenchmarkResult":

@@ -1,7 +1,7 @@
 """Integration layer for retrieval metrics with benchmark runner."""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from siare.benchmarks.metrics.retrieval import (
     RetrievalMetrics,
@@ -10,7 +10,6 @@ from siare.benchmarks.metrics.retrieval import (
     ndcg_at_k,
     recall_at_k,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ class RetrievalEvaluator:
         >>> print(f"NDCG@10: {metrics['ndcg@10']:.3f}")
     """
 
-    def __init__(self, k_values: Optional[list[int]] = None) -> None:
+    def __init__(self, k_values: list[int] | None = None) -> None:
         """Initialize evaluator.
 
         Args:
@@ -38,7 +37,7 @@ class RetrievalEvaluator:
         self,
         retrieval_results: dict[str, list[str]],
         qrels: dict[str, dict[str, int]],
-        k_values: Optional[list[int]] = None,
+        k_values: list[int] | None = None,
     ) -> dict[str, float]:
         """Compute retrieval metrics across all queries.
 
@@ -101,7 +100,7 @@ class RetrievalEvaluator:
         self,
         retrieved_docs: list[str],
         qrels: dict[str, int],
-        k_values: Optional[list[int]] = None,
+        k_values: list[int] | None = None,
     ) -> RetrievalMetrics:
         """Evaluate retrieval for a single query.
 

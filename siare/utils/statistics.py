@@ -1,7 +1,8 @@
 """Statistical utilities for robust metric aggregation"""
 
 import logging
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 from scipy import stats
@@ -23,7 +24,6 @@ from siare.core.models import (
     StatisticalTestResult,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -37,7 +37,7 @@ def bootstrap_confidence_interval(
     statistic_fn: Callable[[Any], float] = np.mean,  # type: ignore[assignment]
     confidence_level: float = 0.95,
     n_bootstrap: int = 10000,
-    random_seed: Optional[int] = None,
+    random_seed: int | None = None,
 ) -> tuple[float, float]:
     """
     Calculate bootstrap confidence interval for a statistic.
@@ -252,7 +252,7 @@ def aggregate_with_statistics(
                 confidence_level=0.95,
                 n_bootstrap=10000,
             )
-        except Exception as e:  # noqa: BLE001 - Catch-all with logging for numerical stability
+        except Exception as e:
             logger.warning(f"Failed to compute CI for {metric_id}: {e}")
 
     # Outlier detection
@@ -265,7 +265,7 @@ def aggregate_with_statistics(
                 outliers = detect_outliers_zscore(values)
             else:
                 logger.warning(f"Unknown outlier method: {outlier_method}")
-        except Exception as e:  # noqa: BLE001 - Catch-all with logging for numerical stability
+        except Exception as e:
             logger.warning(f"Failed to detect outliers for {metric_id}: {e}")
 
     return AggregatedMetric(
@@ -512,7 +512,7 @@ def compare_sop_performance(
 
             results[metric_id] = test_result
 
-        except Exception as e:  # noqa: BLE001 - Catch-all with logging for numerical stability
+        except Exception as e:
             logger.error(f"Failed to compare metric {metric_id}: {e}")
             continue
 

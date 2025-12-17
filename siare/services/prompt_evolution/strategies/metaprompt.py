@@ -12,7 +12,7 @@ Key features:
 - Fast, single-shot improvement for quick fixes
 """
 
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from siare.core.models import (
     Diagnosis,
@@ -27,7 +27,6 @@ from siare.core.models import (
 )
 from siare.services.llm_provider import LLMMessage, LLMProvider
 from siare.services.prompt_evolution.strategies.base import BasePromptOptimizationStrategy
-
 
 # Constants
 TEXT_TRUNCATE_LENGTH = 200
@@ -50,8 +49,8 @@ class MetaPromptStrategy(BasePromptOptimizationStrategy):
 
     def __init__(
         self,
-        llm_provider: Optional[LLMProvider] = None,
-        config: Optional[MetaPromptConfig] = None,
+        llm_provider: LLMProvider | None = None,
+        config: MetaPromptConfig | None = None,
     ):
         """
         Initialize MetaPrompt strategy.
@@ -80,8 +79,8 @@ class MetaPromptStrategy(BasePromptOptimizationStrategy):
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompts: Optional[dict[str, ParsedPrompt]] = None,
-        constraints: Optional[dict[str, Any]] = None,
+        parsed_prompts: dict[str, ParsedPrompt] | None = None,
+        constraints: dict[str, Any] | None = None,
     ) -> PromptEvolutionResult:
         """
         Apply LLM meta-analysis to evolve prompts.
@@ -229,7 +228,7 @@ class MetaPromptStrategy(BasePromptOptimizationStrategy):
         current_prompt: RolePrompt,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> list[dict[str, Any]]:
         """
@@ -328,7 +327,7 @@ Provide {self.config.improvement_count} improvements as JSON:""",
 
                 # Parse JSON response
                 return self._parse_improvements_response(response.content)
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         # Fallback to heuristics
         return self._heuristic_get_improvements(
@@ -383,7 +382,7 @@ Provide {self.config.improvement_count} improvements as JSON:""",
         current_prompt: RolePrompt,  # noqa: ARG002
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompt: Optional[ParsedPrompt],  # noqa: ARG002
+        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
     ) -> list[dict[str, Any]]:
         """Generate improvements using heuristic rules."""
         improvements: list[dict[str, Any]] = []
@@ -435,7 +434,7 @@ Provide {self.config.improvement_count} improvements as JSON:""",
         self,
         current_content: str,
         improvements: list[dict[str, Any]],
-        parsed_prompt: Optional[ParsedPrompt],
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> str:
         """Apply improvements to produce new content."""
@@ -502,7 +501,7 @@ Output only the improved prompt:""",
                 )
                 return response.content.strip()
             return content
-        except Exception:  # noqa: BLE001
+        except Exception:
             return self._heuristic_apply_improvements(
                 content, improvements, None, must_not_change
             )
@@ -511,7 +510,7 @@ Output only the improved prompt:""",
         self,
         content: str,
         improvements: list[dict[str, Any]],
-        parsed_prompt: Optional[ParsedPrompt],  # noqa: ARG002
+        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
         must_not_change: list[str],
     ) -> str:
         """Apply improvements using heuristic rules."""
