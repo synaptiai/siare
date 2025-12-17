@@ -4,17 +4,23 @@ SIARE - Self-Improving Agentic RAG Engine
 A Python library for building self-evolving multi-agent RAG systems using
 Quality-Diversity optimization and evolutionary algorithms.
 
-Example:
-    >>> from siare import ProcessConfig, DirectorService, ExecutionEngine
+Quick Start:
+    >>> from siare.builders import pipeline, role, edge, task
     >>>
-    >>> # Create a simple RAG pipeline configuration
-    >>> config = ProcessConfig(name="my-rag", roles=[...], graph=[...])
-    >>>
-    >>> # Run evolution to optimize the pipeline
-    >>> director = DirectorService(llm_provider)
-    >>> improved_config = await director.mutate_sop(config, diagnosis)
+    >>> config, genome = pipeline(
+    ...     "my-rag",
+    ...     roles=[
+    ...         role("retriever", "gpt-4o-mini", "You are a retriever...", tools=["vector_search"]),
+    ...         role("answerer", "gpt-4o-mini", "You answer questions..."),
+    ...     ],
+    ...     edges=[edge("retriever", "answerer")],
+    ... )
+
+For advanced usage, use the core models directly:
+    >>> from siare import ProcessConfig, RoleConfig, GraphEdge, PromptGenome
 """
 
+from siare.builders import edge, pipeline, role, task
 from siare.core.hooks import (
     EvaluationHooks,
     EvolutionHooks,
@@ -48,7 +54,12 @@ __all__ = [
     "__version__",
     "__author__",
     "__license__",
-    # Core models
+    # Builders (recommended for new users)
+    "pipeline",
+    "role",
+    "edge",
+    "task",
+    # Core models (for advanced usage)
     "ProcessConfig",
     "RoleConfig",
     "RolePrompt",

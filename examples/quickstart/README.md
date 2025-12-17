@@ -22,47 +22,17 @@ export OPENAI_API_KEY="your-key-here"  # or use Ollama for local inference
 ### 1. Create Your Pipeline
 
 ```python
-from siare import ProcessConfig, RoleConfig, RolePrompt, GraphEdge, PromptGenome, Task
+from siare import pipeline, role, edge, task
 
-# Define prompts for each role
-genome = PromptGenome(
-    id="customer_support_genome",
-    version="1.0.0",
-    rolePrompts={
-        "retriever_prompt": RolePrompt(
-            id="retriever_prompt",
-            content="You are a document retrieval assistant...",
-        ),
-        "answerer_prompt": RolePrompt(
-            id="answerer_prompt",
-            content="You are a helpful customer support assistant...",
-        ),
-    },
-)
-
-# Define the pipeline configuration
-config = ProcessConfig(
-    id="customer-support-rag",
-    version="1.0.0",
-    models={"default": "gpt-4o-mini"},
-    tools=["vector_search"],
+# Create a 2-agent RAG pipeline in just a few lines
+config, genome = pipeline(
+    "customer-support-rag",
     roles=[
-        RoleConfig(
-            id="retriever",
-            model="gpt-4o-mini",
-            tools=["vector_search"],
-            promptRef="retriever_prompt",
-        ),
-        RoleConfig(
-            id="answerer",
-            model="gpt-4o-mini",
-            tools=None,
-            promptRef="answerer_prompt",
-        ),
+        role("retriever", "gpt-4o-mini", "You are a document retrieval specialist...", tools=["vector_search"]),
+        role("answerer", "gpt-4o-mini", "You are a helpful customer support assistant..."),
     ],
-    graph=[
-        GraphEdge(from_="user_input", to="retriever"),
-        GraphEdge(from_="retriever", to="answerer"),
+    edges=[
+        edge("retriever", "answerer"),
     ],
 )
 ```
@@ -76,21 +46,16 @@ from siare.services import ExecutionEngine, LLMProvider
 llm = LLMProvider(
     provider="openai",
     model="gpt-4o-mini",
-    api_key="your-api-key",  # or set OPENAI_API_KEY env var
 )
 
 # Create execution engine
 engine = ExecutionEngine(llm_provider=llm)
 
 # Define a task
-task = Task(
-    id="q1",
-    input={"query": "How do I reset my password?"},
-    groundTruth={"answer": "Go to Settings > Security > Reset Password"},
-)
+t = task("How do I reset my password?", expected="Go to Settings > Security")
 
 # Execute
-trace = await engine.execute(config, genome, task)
+trace = await engine.execute(config, genome, t)
 print(trace.final_output)
 ```
 
@@ -106,25 +71,16 @@ evaluator = EvaluationService()
 
 # Evolution loop
 for generation in range(10):
-    # Execute current config
-    trace = await engine.execute(config, genome, task)
-
-    # Evaluate performance
-    evaluation = await evaluator.evaluate(trace, task)
+    trace = await engine.execute(config, genome, t)
+    evaluation = await evaluator.evaluate(trace, t)
     print(f"Gen {generation}: accuracy={evaluation.metrics.get('accuracy', 0):.2f}")
 
-    # Diagnose weaknesses
     diagnosis = await director.diagnose(evaluation)
-
-    # Mutate to improve
     config, genome = await director.mutate_sop(config, genome, diagnosis)
-
-    # Track in gene pool
     gene_pool.add(config, evaluation)
 
 # Get best performing config
 best = gene_pool.get_pareto_frontier()[0]
-print(f"Best config: {best.sop.id} v{best.sop.version}")
 ```
 
 ## File Structure

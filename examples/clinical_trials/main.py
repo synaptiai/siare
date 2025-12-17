@@ -25,7 +25,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from siare import ProcessConfig, RoleConfig, RolePrompt, GraphEdge, PromptGenome, Task
+from siare import pipeline, role, edge
 
 
 # Define prompts as constants for readability
@@ -136,7 +136,7 @@ Add proper citations to the research summary:
 Output the summary with inline citations and a references list."""
 
 
-def create_clinical_trials_pipeline() -> tuple[ProcessConfig, PromptGenome]:
+def create_clinical_trials_pipeline():
     """Create a multi-agent clinical trials research pipeline.
 
     Architecture:
@@ -147,52 +147,31 @@ def create_clinical_trials_pipeline() -> tuple[ProcessConfig, PromptGenome]:
     - Synthesizer: Combines findings into coherent summary
     - Citation Writer: Adds proper academic citations
     """
-    genome = PromptGenome(
-        id="clinical_trials_genome",
-        version="1.0.0",
-        rolePrompts={
-            "router_prompt": RolePrompt(id="router_prompt", content=ROUTER_PROMPT),
-            "trial_searcher_prompt": RolePrompt(id="trial_searcher_prompt", content=TRIAL_SEARCHER_PROMPT),
-            "study_analyzer_prompt": RolePrompt(id="study_analyzer_prompt", content=STUDY_ANALYZER_PROMPT),
-            "safety_reviewer_prompt": RolePrompt(id="safety_reviewer_prompt", content=SAFETY_REVIEWER_PROMPT),
-            "synthesizer_prompt": RolePrompt(id="synthesizer_prompt", content=SYNTHESIZER_PROMPT),
-            "citation_writer_prompt": RolePrompt(id="citation_writer_prompt", content=CITATION_WRITER_PROMPT),
-        },
-    )
-
-    config = ProcessConfig(
-        id="clinical-trials-assistant",
-        version="1.0.0",
-        description="Multi-agent pipeline for clinical trials research",
-        models={
-            "default": "gpt-4o-mini",
-            "synthesis": "gpt-4o",  # Stronger model for synthesis
-        },
-        tools=["vector_search", "clinical_trials_api"],
+    return pipeline(
+        "clinical-trials-assistant",
         roles=[
-            RoleConfig(id="router", model="gpt-4o-mini", tools=None, promptRef="router_prompt"),
-            RoleConfig(id="trial_searcher", model="gpt-4o-mini", tools=["vector_search", "clinical_trials_api"], promptRef="trial_searcher_prompt"),
-            RoleConfig(id="study_analyzer", model="gpt-4o-mini", tools=None, promptRef="study_analyzer_prompt"),
-            RoleConfig(id="safety_reviewer", model="gpt-4o-mini", tools=None, promptRef="safety_reviewer_prompt"),
-            RoleConfig(id="synthesizer", model="gpt-4o", tools=None, promptRef="synthesizer_prompt"),
-            RoleConfig(id="citation_writer", model="gpt-4o-mini", tools=None, promptRef="citation_writer_prompt"),
+            role("router", "gpt-4o-mini", ROUTER_PROMPT),
+            role("trial_searcher", "gpt-4o-mini", TRIAL_SEARCHER_PROMPT, tools=["vector_search", "clinical_trials_api"]),
+            role("study_analyzer", "gpt-4o-mini", STUDY_ANALYZER_PROMPT),
+            role("safety_reviewer", "gpt-4o-mini", SAFETY_REVIEWER_PROMPT),
+            role("synthesizer", "gpt-4o", SYNTHESIZER_PROMPT),  # Stronger model for synthesis
+            role("citation_writer", "gpt-4o-mini", CITATION_WRITER_PROMPT),
         ],
-        graph=[
+        edges=[
             # Router connects to specialized agents with conditions
-            GraphEdge(from_="user_input", to="router"),
-            GraphEdge(from_="router", to="trial_searcher", condition="'search' in output or 'compare' in output"),
-            GraphEdge(from_="router", to="study_analyzer", condition="'analyze' in output or 'compare' in output"),
-            GraphEdge(from_="router", to="safety_reviewer", condition="'safety' in output"),
+            edge("router", "trial_searcher", condition="'search' in output or 'compare' in output"),
+            edge("router", "study_analyzer", condition="'analyze' in output or 'compare' in output"),
+            edge("router", "safety_reviewer", condition="'safety' in output"),
             # All specialists feed into synthesizer
-            GraphEdge(from_="trial_searcher", to="synthesizer"),
-            GraphEdge(from_="study_analyzer", to="synthesizer"),
-            GraphEdge(from_="safety_reviewer", to="synthesizer"),
+            edge("trial_searcher", "synthesizer"),
+            edge("study_analyzer", "synthesizer"),
+            edge("safety_reviewer", "synthesizer"),
             # Synthesizer to citation writer
-            GraphEdge(from_="synthesizer", to="citation_writer"),
+            edge("synthesizer", "citation_writer"),
         ],
+        description="Multi-agent pipeline for clinical trials research",
+        entry_point="router",  # Explicit entry point
     )
-
-    return config, genome
 
 
 def load_sample_trials() -> list[dict[str, Any]]:
@@ -292,14 +271,14 @@ async def demonstrate_pipeline() -> None:
     print("\n" + "-" * 40)
     print("Agent Topology:")
     print("-" * 40)
-    for role in config.roles:
-        tools_str = f" [tools: {', '.join(role.tools)}]" if role.tools else ""
-        print(f"  • {role.id} ({role.model}){tools_str}")
+    for r in config.roles:
+        tools_str = f" [tools: {', '.join(r.tools)}]" if r.tools else ""
+        print(f"  • {r.id} ({r.model}){tools_str}")
 
     print("\nGraph Connections:")
-    for edge in config.graph:
-        condition_str = f" [if: {edge.condition}]" if edge.condition else ""
-        print(f"  {edge.from_} → {edge.to}{condition_str}")
+    for e in config.graph:
+        condition_str = f" [if: {e.condition}]" if e.condition else ""
+        print(f"  {e.from_} → {e.to}{condition_str}")
 
     # Load sample data
     trials = load_sample_trials()

@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from siare import ProcessConfig, RoleConfig, RolePrompt, GraphEdge, PromptGenome, Task
+from siare import pipeline, role, edge, task
 
 
 RETRIEVER_PROMPT = """You are a document retrieval specialist for customer support.
@@ -54,58 +54,27 @@ Guidelines:
 Example:
 User: How do I reset my password?
 Context: [FAQ] To reset your password, go to Settings > Security > Reset Password...
-Answer: To reset your password, go to Settings > Security > Reset Password [FAQ]. You'll receive an email with further instructions."""
+Answer: To reset your password, go to Settings > Security > Reset Password [FAQ]."""
 
 
-def create_customer_support_pipeline() -> tuple[ProcessConfig, PromptGenome]:
+def create_customer_support_pipeline():
     """Create a simple customer support RAG pipeline.
 
     The pipeline has two agents:
     1. Retriever - finds relevant documents
     2. Answerer - generates answers from context
     """
-    genome = PromptGenome(
-        id="customer_support_genome",
-        version="1.0.0",
-        rolePrompts={
-            "retriever_prompt": RolePrompt(
-                id="retriever_prompt",
-                content=RETRIEVER_PROMPT,
-            ),
-            "answerer_prompt": RolePrompt(
-                id="answerer_prompt",
-                content=ANSWERER_PROMPT,
-            ),
-        },
-    )
-
-    config = ProcessConfig(
-        id="customer-support-rag",
-        version="1.0.0",
-        description="A self-evolving customer support RAG pipeline",
-        models={"default": "gpt-4o-mini"},
-        tools=["vector_search"],
+    return pipeline(
+        "customer-support-rag",
         roles=[
-            RoleConfig(
-                id="retriever",
-                model="gpt-4o-mini",
-                tools=["vector_search"],
-                promptRef="retriever_prompt",
-            ),
-            RoleConfig(
-                id="answerer",
-                model="gpt-4o-mini",
-                tools=None,
-                promptRef="answerer_prompt",
-            ),
+            role("retriever", "gpt-4o-mini", RETRIEVER_PROMPT, tools=["vector_search"]),
+            role("answerer", "gpt-4o-mini", ANSWERER_PROMPT),
         ],
-        graph=[
-            GraphEdge(from_="user_input", to="retriever"),
-            GraphEdge(from_="retriever", to="answerer"),
+        edges=[
+            edge("retriever", "answerer"),
         ],
+        description="A self-evolving customer support RAG pipeline",
     )
-
-    return config, genome
 
 
 def load_sample_documents(docs_dir: Path) -> list[dict]:
@@ -113,7 +82,6 @@ def load_sample_documents(docs_dir: Path) -> list[dict]:
     documents = []
 
     if not docs_dir.exists():
-        # Create sample docs if they don't exist
         docs_dir.mkdir(parents=True, exist_ok=True)
         _create_sample_docs(docs_dir)
 
@@ -241,33 +209,28 @@ async def run_basic_example() -> None:
     documents = load_sample_documents(docs_dir)
     print(f"Loaded {len(documents)} documents")
 
-    # Create a task
-    task = Task(
-        id="demo-query",
-        input={"query": "How do I reset my password?"},
-        groundTruth={"answer": "Go to Settings > Security > Reset Password"},
-    )
-    print(f"\nQuery: {task.input['query']}")
+    # Create a task using the builder
+    t = task("How do I reset my password?", expected="Go to Settings > Security > Reset Password")
+    print(f"\nQuery: {t.input['query']}")
 
-    # Note: Full execution requires LLM provider setup
-    # For demo purposes, we'll show the configuration
+    # Show the configuration
     print("\n" + "-" * 40)
     print("Pipeline Configuration:")
     print("-" * 40)
-    for role in config.roles:
-        prompt = genome.rolePrompts.get(role.promptRef)
-        print(f"\nRole: {role.id}")
-        print(f"  Model: {role.model}")
-        print(f"  Tools: {role.tools or 'None'}")
+    for r in config.roles:
+        prompt = genome.rolePrompts.get(r.promptRef)
+        print(f"\nRole: {r.id}")
+        print(f"  Model: {r.model}")
+        print(f"  Tools: {r.tools or 'None'}")
         if prompt:
-            prompt_preview = prompt.content[:100] + "..." if len(prompt.content) > 100 else prompt.content
-            print(f"  Prompt: {prompt_preview}")
+            preview = prompt.content[:100] + "..." if len(prompt.content) > 100 else prompt.content
+            print(f"  Prompt: {preview}")
 
     print("\n" + "-" * 40)
     print("Graph (agent flow):")
     print("-" * 40)
-    for edge in config.graph:
-        print(f"  {edge.from_} -> {edge.to}")
+    for e in config.graph:
+        print(f"  {e.from_} -> {e.to}")
 
     print("\n✓ Pipeline configuration complete!")
     print("\nTo execute this pipeline with a real LLM:")
