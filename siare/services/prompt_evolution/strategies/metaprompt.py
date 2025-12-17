@@ -75,7 +75,7 @@ class MetaPromptStrategy(BasePromptOptimizationStrategy):
 
     def optimize(
         self,
-        sop_config: ProcessConfig,  # noqa: ARG002
+        sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
@@ -379,10 +379,10 @@ Provide {self.config.improvement_count} improvements as JSON:""",
 
     def _heuristic_get_improvements(
         self,
-        current_prompt: RolePrompt,  # noqa: ARG002
+        current_prompt: RolePrompt,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
-        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
+        parsed_prompt: ParsedPrompt | None,
     ) -> list[dict[str, Any]]:
         """Generate improvements using heuristic rules."""
         improvements: list[dict[str, Any]] = []
@@ -510,7 +510,7 @@ Output only the improved prompt:""",
         self,
         content: str,
         improvements: list[dict[str, Any]],
-        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
+        parsed_prompt: ParsedPrompt | None,
         must_not_change: list[str],
     ) -> str:
         """Apply improvements using heuristic rules."""

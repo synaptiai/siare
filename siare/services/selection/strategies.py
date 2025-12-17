@@ -149,7 +149,7 @@ class ParetoSelectionStrategy(BaseSelectionStrategy):
     def select(
         self,
         gene_pool: "GenePool",
-        qd_grid: "QDGridManager",  # noqa: ARG002 - required by interface
+        qd_grid: "QDGridManager",
         count: int,
     ) -> list[tuple[str, str]]:
         pareto_genes = gene_pool.list_sop_genes(pareto_optimal_only=True)
@@ -222,7 +222,7 @@ class TournamentSelectionStrategy(BaseSelectionStrategy):
     def select(
         self,
         gene_pool: "GenePool",
-        qd_grid: "QDGridManager",  # noqa: ARG002 - required by interface
+        qd_grid: "QDGridManager",
         count: int,
     ) -> list[tuple[str, str]]:
         all_genes = gene_pool.list_sop_genes()
@@ -340,7 +340,7 @@ class RecentSelectionStrategy(BaseSelectionStrategy):
     def select(
         self,
         gene_pool: "GenePool",
-        qd_grid: "QDGridManager",  # noqa: ARG002 - required by interface
+        qd_grid: "QDGridManager",
         count: int,
     ) -> list[tuple[str, str]]:
         """

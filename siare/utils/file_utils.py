@@ -56,7 +56,7 @@ def atomic_write_json(
         try:
             # Write JSON to temp file
             # Note: temp_fd is a file descriptor (int), not a path
-            with open(temp_fd, "w") as f:  # noqa: PTH123
+            with open(temp_fd, "w") as f:
                 json.dump(data, f, indent=2)
 
             # Atomic rename (POSIX guarantees atomicity)

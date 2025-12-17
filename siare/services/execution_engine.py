@@ -61,7 +61,7 @@ def timeout(seconds: int):
         yield
         return
 
-    def timeout_handler(signum: int, frame: FrameType | None) -> None:  # noqa: ARG001
+    def timeout_handler(signum: int, frame: FrameType | None) -> None:
         # signum and frame are required by signal.signal() callback signature
         raise ExecutionTimeoutError(f"Operation timed out after {seconds} seconds")
 

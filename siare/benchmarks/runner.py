@@ -304,7 +304,7 @@ class BenchmarkRunner:
     def _run_sample(
         self,
         sample: "BenchmarkSample",
-        metrics: list[str],  # noqa: ARG002
+        metrics: list[str],
     ) -> SampleResult:
         """Run a single benchmark sample.
 

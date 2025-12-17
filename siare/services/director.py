@@ -1893,7 +1893,7 @@ Guidelines:
     def _create_mutation_from_evolution(
         self,
         parent_sop: ProcessConfig,
-        parent_genome: PromptGenome,  # noqa: ARG002 - kept for future use
+        parent_genome: PromptGenome,
         evolution_result: "PromptEvolutionResult",
         diagnosis: Diagnosis,
     ) -> SOPMutation:

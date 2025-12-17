@@ -523,7 +523,7 @@ class BenchmarkReporter:
 
         Path(filepath).write_text(content)
 
-    def to_publication_markdown(  # noqa: C901
+    def to_publication_markdown(
         self,
         result: "PublicationBenchmarkResult",
     ) -> str:

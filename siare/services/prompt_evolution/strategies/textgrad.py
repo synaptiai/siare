@@ -243,7 +243,7 @@ class TextGradStrategy(BasePromptOptimizationStrategy):
     def _compute_gradients(
         self,
         feedback: list[PromptFeedback],
-        diagnosis: Diagnosis,  # noqa: ARG002
+        diagnosis: Diagnosis,
     ) -> list[TextualGradient]:
         """
         Compute textual gradients from feedback.

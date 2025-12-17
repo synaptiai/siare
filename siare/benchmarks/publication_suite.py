@@ -353,7 +353,7 @@ class PublicationBenchmark:
         self._metrics = metrics or self.FULL_METRICS
         self._tool_adapters = tool_adapters or {}
 
-    def run_full_suite(  # noqa: C901
+    def run_full_suite(
         self,
         evolved_sop: "ProcessConfig",
         evolved_genome: "PromptGenome",

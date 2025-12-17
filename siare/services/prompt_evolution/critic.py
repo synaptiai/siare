@@ -489,7 +489,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
         self,
         section: PromptSection,
         failure_info: dict[str, Any],
-        node_info: dict[str, Any],  # noqa: ARG002
+        node_info: dict[str, Any],
     ) -> PromptFeedback:
         """
         Generate feedback for a specific prompt section.
@@ -552,7 +552,7 @@ class TraceFeedbackExtractor(BaseLLMCritic):
 
     def _build_section_suggestion(
         self,
-        section: PromptSection,  # noqa: ARG002
+        section: PromptSection,
         failure_info: dict[str, Any],
     ) -> str:
         """Build improvement suggestion for a section"""

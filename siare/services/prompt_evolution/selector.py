@@ -283,7 +283,7 @@ class AdaptiveStrategySelector(BasePromptOptimizationStrategy):
     def _get_selection_reason(
         self,
         feedback: list[PromptFeedback],
-        diagnosis: Diagnosis,  # noqa: ARG002
+        diagnosis: Diagnosis,
     ) -> str:
         """Generate human-readable reason for strategy selection."""
         if not feedback:

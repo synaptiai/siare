@@ -50,7 +50,7 @@ class PromptVariant:
         generation: int = 0,
         parent_ids: list[str] | None = None,
     ):
-        self.id = f"{role_id}-gen{generation}-{random.randint(1000, 9999)}"  # noqa: S311
+        self.id = f"{role_id}-gen{generation}-{random.randint(1000, 9999)}"
         self.role_id = role_id
         self.content = content
         self.fitness = fitness
@@ -105,7 +105,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
 
     def optimize(
         self,
-        sop_config: ProcessConfig,  # noqa: ARG002
+        sop_config: ProcessConfig,
         prompt_genome: PromptGenome,
         feedback: list[PromptFeedback],
         diagnosis: Diagnosis,
@@ -342,7 +342,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
 
         # Generate offspring to fill population
         while len(new_population) < self.config.population_size:
-            if random.random() < self.config.crossover_rate and len(population) >= MIN_POPULATION_FOR_CROSSOVER:  # noqa: S311
+            if random.random() < self.config.crossover_rate and len(population) >= MIN_POPULATION_FOR_CROSSOVER:
                 # Crossover
                 parent1 = self._tournament_select(population)
                 parent2 = self._tournament_select(population)
@@ -356,7 +356,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
                 # Mutation
                 parent = self._tournament_select(population)
 
-                if random.random() < self.config.mutation_rate:  # noqa: S311
+                if random.random() < self.config.mutation_rate:
                     offspring = self._mutate(
                         parent, feedback, parsed_prompt, must_not_change
                     )
@@ -387,7 +387,7 @@ class EvoPromptStrategy(BasePromptOptimizationStrategy):
     def _roulette_select(self, population: list[PromptVariant]) -> PromptVariant:
         """Select parent via fitness-proportionate (roulette) selection."""
         total_fitness = sum(max(0.01, v.fitness) for v in population)
-        pick = random.uniform(0, total_fitness)  # noqa: S311
+        pick = random.uniform(0, total_fitness)
 
         current = 0
         for variant in population:
@@ -599,7 +599,7 @@ Output only the improved prompt:""",
         self,
         parent1_content: str,
         parent2_content: str,
-        parsed_prompt: ParsedPrompt,  # noqa: ARG002
+        parsed_prompt: ParsedPrompt,
     ) -> str:
         """Crossover at section boundaries."""
         # Split both parents by markdown headers
@@ -611,7 +611,7 @@ Output only the improved prompt:""",
         max_sections = max(len(parent1_sections), len(parent2_sections))
 
         for i in range(max_sections):
-            if random.random() < CROSSOVER_SECTION_PROBABILITY:  # noqa: S311
+            if random.random() < CROSSOVER_SECTION_PROBABILITY:
                 if i < len(parent1_sections):
                     result_sections.append(parent1_sections[i])
                 elif i < len(parent2_sections):
@@ -637,8 +637,8 @@ Output only the improved prompt:""",
             return parent1_content or parent2_content
 
         # Single-point crossover with safeguards
-        crossover_point1 = random.randint(0, len(lines1)) if lines1 else 0  # noqa: S311
-        crossover_point2 = random.randint(0, len(lines2)) if lines2 else 0  # noqa: S311
+        crossover_point1 = random.randint(0, len(lines1)) if lines1 else 0
+        crossover_point2 = random.randint(0, len(lines2)) if lines2 else 0
 
         offspring_lines = lines1[:crossover_point1] + lines2[crossover_point2:]
 
@@ -652,8 +652,8 @@ Output only the improved prompt:""",
     def _heuristic_mutate(
         self,
         content: str,
-        feedback: list[PromptFeedback],  # noqa: ARG002
-        parsed_prompt: ParsedPrompt | None,  # noqa: ARG002
+        feedback: list[PromptFeedback],
+        parsed_prompt: ParsedPrompt | None,
     ) -> str:
         """Heuristic mutation when LLM not available."""
         lines = content.split("\n")
@@ -672,17 +672,17 @@ Output only the improved prompt:""",
         max_mutations = max(1, len(mutable_indices) // 4)
 
         while mutations_applied < max_mutations:
-            idx = random.choice(mutable_indices)  # noqa: S311
+            idx = random.choice(mutable_indices)
             line = lines[idx]
 
-            mutation_type = random.choice(["rephrase", "expand", "clarify"])  # noqa: S311
+            mutation_type = random.choice(["rephrase", "expand", "clarify"])
 
             if mutation_type == "rephrase" and len(line) > MIN_LINE_LENGTH_REPHRASE:
                 # Simple word shuffle for rephrasing
                 words: list[str] = line.split()
                 if len(words) > MIN_WORDS_FOR_SWAP:
                     # Swap two adjacent words
-                    swap_idx = random.randint(0, len(words) - 2)  # noqa: S311
+                    swap_idx = random.randint(0, len(words) - 2)
                     words[swap_idx], words[swap_idx + 1] = (
                         words[swap_idx + 1],
                         words[swap_idx],
