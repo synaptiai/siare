@@ -10,6 +10,7 @@ Welcome to the SIARE (Self-Improving Agentic RAG Engine) documentation.
 
 | Goal | Guide |
 |------|-------|
+| Understand what makes SIARE unique | [Why SIARE?](WHY_SIARE.md) |
 | Run your first pipeline | [Quick Start](QUICKSTART.md) |
 | Configure SIARE | [Configuration](CONFIGURATION.md) |
 | Fix common issues | [Troubleshooting](TROUBLESHOOTING.md) |
@@ -43,6 +44,7 @@ Welcome to the SIARE (Self-Improving Agentic RAG Engine) documentation.
 ```
 docs/
 ├── Getting Started
+│   ├── WHY_SIARE.md               # What makes SIARE unique
 │   ├── QUICKSTART.md              # 10-minute first run
 │   ├── CONFIGURATION.md           # All settings explained
 │   └── TROUBLESHOOTING.md         # Common issues
