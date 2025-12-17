@@ -239,8 +239,8 @@ def task(
 
 
 __all__ = [
-    "role",
     "edge",
     "pipeline",
+    "role",
     "task",
 ]

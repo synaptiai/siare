@@ -1,7 +1,7 @@
 """Factory for creating selection strategies"""
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from siare.core.models import (
     HybridSelectionConfig,
@@ -21,7 +21,6 @@ from siare.services.selection.strategies import (
     RecentSelectionStrategy,
     TournamentSelectionStrategy,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,10 +45,10 @@ class SelectionStrategyFactory:
         # Singleton instance for HYBRID strategies to reference
         self._instance = self
 
-    def create(  # noqa: PLR0911 - Multiple returns acceptable in factory pattern
+    def create(
         self,
         strategy_type: SelectionStrategyEnum,
-        config: Optional[dict[str, Any]] = None,
+        config: dict[str, Any] | None = None,
     ) -> BaseSelectionStrategy:
         """
         Create a selection strategy instance

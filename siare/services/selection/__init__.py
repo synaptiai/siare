@@ -33,7 +33,6 @@ from siare.services.selection.strategies import (
     TournamentSelectionStrategy,
 )
 
-
 __all__ = [
     "BaseSelectionStrategy",
     "HybridSelectionStrategy",

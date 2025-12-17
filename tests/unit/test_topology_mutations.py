@@ -95,7 +95,8 @@ EDGES_TO:
         )
 
         # Check new version
-        assert new_sop.version == "2.0.0"  # Major version bump
+        # Version includes unique hash suffix (e.g., "2.0.0-abc123")
+        assert new_sop.version.startswith("2.0.0")
 
         # Check role was added
         assert len(new_sop.roles) == 4
@@ -200,8 +201,8 @@ REMOVE_ROLE: retriever
             MutationType.REMOVE_ROLE, None, llm_content, base_sop, base_genome, None
         )
 
-        # Check version
-        assert new_sop.version == "2.0.0"  # Major version bump
+        # Check version (includes hash suffix)
+        assert new_sop.version.startswith("2.0.0")
 
         # Check role was removed
         assert len(new_sop.roles) == 2
@@ -274,8 +275,8 @@ REMOVE_EDGES:
             MutationType.REWIRE_GRAPH, None, llm_content, base_sop, base_genome
         )
 
-        # Check version
-        assert new_sop.version == "2.0.0"  # Major version bump
+        # Check version (includes hash suffix)
+        assert new_sop.version.startswith("2.0.0")
 
         # Check new edge exists
         new_edge = next(
@@ -478,7 +479,8 @@ class TestVersioning:
             MutationType.ADD_ROLE, None, llm_content, base_sop, base_genome
         )
 
-        assert new_sop.version == "2.0.0"
+        # Version includes unique hash suffix (e.g., "2.0.0-abc123")
+        assert new_sop.version.startswith("2.0.0")
 
     def test_remove_role_increments_major(self, architect, base_sop, base_genome):
         """Test that REMOVE_ROLE increments major version"""
@@ -486,7 +488,8 @@ class TestVersioning:
             MutationType.REMOVE_ROLE, "retriever", "", base_sop, base_genome
         )
 
-        assert new_sop.version == "2.0.0"
+        # Version includes unique hash suffix
+        assert new_sop.version.startswith("2.0.0")
 
     def test_rewire_graph_increments_major(self, architect, base_sop, base_genome):
         """Test that REWIRE_GRAPH increments major version"""
@@ -496,7 +499,8 @@ class TestVersioning:
             MutationType.REWIRE_GRAPH, None, llm_content, base_sop, base_genome
         )
 
-        assert new_sop.version == "2.0.0"
+        # Version includes unique hash suffix
+        assert new_sop.version.startswith("2.0.0")
 
     def test_prompt_change_increments_minor(self, architect, base_sop, base_genome):
         """Test that PROMPT_CHANGE increments minor version"""
@@ -504,7 +508,8 @@ class TestVersioning:
             MutationType.PROMPT_CHANGE, "planner", "New prompt content", base_sop, base_genome
         )
 
-        assert new_sop.version == "1.1.0"
+        # Version includes unique hash suffix
+        assert new_sop.version.startswith("1.1.0")
 
 
 class TestConstraintValidation:
@@ -567,7 +572,7 @@ EDGES_FROM: responder
         )
 
         assert len(sop1.roles) == 4
-        assert sop1.version == "2.0.0"
+        assert sop1.version.startswith("2.0.0")
 
         # 2. Rewire the graph
         rewire_content = """
@@ -579,7 +584,7 @@ REMOVE_EDGES:
             MutationType.REWIRE_GRAPH, None, rewire_content, sop1, genome1
         )
 
-        assert sop2.version == "3.0.0"
+        assert sop2.version.startswith("3.0.0")
         # Should have added an edge
         assert any(e.from_ == "planner" and e.to == "validator" for e in sop2.graph)
 
@@ -588,7 +593,7 @@ REMOVE_EDGES:
             MutationType.PROMPT_CHANGE, "validator", "Updated prompt", sop2, genome2
         )
 
-        assert sop3.version == "3.1.0"
+        assert sop3.version.startswith("3.1.0")
         assert genome3.rolePrompts["prompt_validator"].content == "Updated prompt"
 
     def test_complex_topology_change(self, architect, base_sop, base_genome):

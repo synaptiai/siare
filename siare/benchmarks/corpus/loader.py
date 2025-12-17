@@ -6,28 +6,35 @@ Supports BEIR format and custom document collections.
 
 import logging
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer as SentenceTransformerType
 
 logger = logging.getLogger(__name__)
 
 # Check for optional dependencies
 _chromadb_available = False
 _sentence_transformers_available = False
+chromadb: Any = None  # type: ignore[misc]
+Settings: Any = None  # type: ignore[misc]
+SentenceTransformer: Any = None  # type: ignore[misc]
 
 try:
-    import chromadb
-    from chromadb.config import Settings
-
+    import chromadb as _chromadb
+    from chromadb.config import Settings as _Settings
+    chromadb = _chromadb
+    Settings = _Settings
     _chromadb_available = True
 except ImportError:
     logger.info("chromadb not installed. Install with: pip install chromadb")
 
 try:
-    from sentence_transformers import SentenceTransformer
-
+    from sentence_transformers import SentenceTransformer as _SentenceTransformer
+    SentenceTransformer = _SentenceTransformer
     _sentence_transformers_available = True
 except ImportError:
-    SentenceTransformer = None  # type: ignore[misc, assignment]
+    _sentence_transformers_available = False
     logger.info("sentence-transformers not installed.")
 
 
@@ -88,9 +95,9 @@ class CorpusLoader:
             )
 
         # Lazy-load embedding model
-        self._embedding_model: SentenceTransformer | None = None
+        self._embedding_model: SentenceTransformerType | None = None
 
-    def _get_embedding_model(self) -> "SentenceTransformer":
+    def _get_embedding_model(self) -> "SentenceTransformerType":
         """Lazy-load the embedding model."""
         if self._embedding_model is None:
             if not _sentence_transformers_available:

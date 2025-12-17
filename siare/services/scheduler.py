@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import time
+import uuid
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -16,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 from siare.core.config import ConvergenceConfig
 from siare.core.constants import MIN_PARENTS_FOR_CROSSOVER
+from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
 from siare.core.models import (
     AggregatedMetric,
     AggregationMethod,
@@ -132,6 +135,39 @@ class EvolutionScheduler:
         self._evaluation_cache: dict[str, list[EvaluationVector]] = {}
         self._cache_hits = 0
         self._cache_misses = 0
+
+    def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+        """Fire an evolution hook from sync context.
+
+        Safely runs async hooks from synchronous code. If no hooks are registered,
+        returns immediately with zero overhead. Errors are logged but don't propagate.
+
+        Args:
+            hook_name: Name of the hook method (e.g., "on_generation_complete").
+            ctx: Hook context with correlation ID and metadata.
+            *args: Arguments for the hook.
+            **kwargs: Keyword arguments for the hook.
+
+        Returns:
+            Hook result, or None if no hooks registered or hook failed.
+        """
+        # Fast path: no hooks registered = no overhead
+        if HookRegistry.get_evolution_hooks() is None:
+            return None
+
+        try:
+            # Try to get existing event loop (may be running in async context)
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context - create task but don't await
+                loop.create_task(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+                return None
+            except RuntimeError:
+                # No running loop - create new one for sync context
+                return asyncio.run(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+        except Exception as e:
+            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            return None
 
     # =========================================================================
     # Checkpoint/Recovery Methods
@@ -650,6 +686,22 @@ class EvolutionScheduler:
 
         self.generation_history.append(generation_stats)
         self.best_quality_history.append(best_quality)  # Track for convergence detection
+
+        # Fire generation complete hook
+        hook_ctx = HookContext(
+            correlation_id=str(uuid.uuid4()),
+            metadata={
+                "job_id": str(job.id),
+                "phase": phase.name,
+            },
+        )
+        self._fire_hook(
+            "on_generation_complete",
+            hook_ctx,
+            job.currentGeneration,
+            len(parents) + len(evaluated_offspring),  # population size
+            best_quality,
+        )
 
         return generation_stats
 

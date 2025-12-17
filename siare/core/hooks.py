@@ -35,11 +35,11 @@ if TYPE_CHECKING:
     from siare.core.models import (
         Diagnosis,
         EvaluationVector,
-        ExecutionTrace,
         MutationType,
         ProcessConfig,
         SOPGene,
     )
+    from siare.services.execution_engine import ExecutionTrace
 
 
 logger = logging.getLogger(__name__)

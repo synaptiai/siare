@@ -28,7 +28,6 @@ from siare.core.models import (
 )
 from siare.utils.sampling import quality_weighted_sample
 
-
 if TYPE_CHECKING:
     from siare.services.gene_pool import GenePool
     from siare.services.qd_grid import QDGridManager
@@ -273,7 +272,7 @@ class QDCuriositySelectionStrategy(BaseSelectionStrategy):
     - Low quality, many visits → low score (known bad region)
     """
 
-    def __init__(self, config: Optional[QDCuriosityConfig] = None):
+    def __init__(self, config: QDCuriosityConfig | None = None):
         """
         Initialize QD curiosity selection
 
@@ -329,7 +328,7 @@ class RecentSelectionStrategy(BaseSelectionStrategy):
     - Adaptive: Automatically adjusts to current search region
     """
 
-    def __init__(self, config: Optional[RecentSelectionConfig] = None):
+    def __init__(self, config: RecentSelectionConfig | None = None):
         """
         Initialize recent selection
 
@@ -426,7 +425,7 @@ class HybridSelectionStrategy(BaseSelectionStrategy):
 
     def __init__(
         self,
-        config: Optional[HybridSelectionConfig] = None,
+        config: HybridSelectionConfig | None = None,
         strategy_factory: Optional["SelectionStrategyFactory"] = None,
     ):
         """

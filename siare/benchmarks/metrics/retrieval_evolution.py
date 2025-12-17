@@ -12,8 +12,8 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from siare.core.models import ExecutionTrace
     from siare.services.evaluation_service import EvaluationService
+    from siare.services.execution_engine import ExecutionTrace
 
 from siare.benchmarks.metrics.retrieval import (
     mean_reciprocal_rank,

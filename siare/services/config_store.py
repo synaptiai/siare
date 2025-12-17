@@ -1,9 +1,13 @@
 """Config Store Service - Manages versioned configuration storage"""
 
+import asyncio
 import json
+import logging
+import uuid
 from pathlib import Path
 from typing import Any
 
+from siare.core.hooks import HookContext, HookRegistry, fire_storage_hook
 from siare.core.models import (
     DomainPackage,
     MetaConfig,
@@ -13,6 +17,8 @@ from siare.core.models import (
     TaskSet,
     ToolConfig,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigStore:
@@ -45,6 +51,39 @@ class ConfigStore:
         if self.storage_path:
             self._load_from_disk()
 
+    def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+        """Fire a storage hook from sync context.
+
+        Safely runs async hooks from synchronous code. If no hooks are registered,
+        returns immediately with zero overhead. Errors are logged but don't propagate.
+
+        Args:
+            hook_name: Name of the hook method (e.g., "on_sop_saved").
+            ctx: Hook context with correlation ID and metadata.
+            *args: Arguments for the hook.
+            **kwargs: Keyword arguments for the hook.
+
+        Returns:
+            Hook result, or None if no hooks registered or hook failed.
+        """
+        # Fast path: no hooks registered = no overhead
+        if HookRegistry.get_storage_hooks() is None:
+            return None
+
+        try:
+            # Try to get existing event loop (may be running in async context)
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context - create task but don't await
+                loop.create_task(fire_storage_hook(hook_name, ctx, *args, **kwargs))
+                return None
+            except RuntimeError:
+                # No running loop - create new one for sync context
+                return asyncio.run(fire_storage_hook(hook_name, ctx, *args, **kwargs))
+        except Exception as e:
+            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            return None
+
     # ========================================================================
     # ProcessConfig (SOP) Methods
     # ========================================================================
@@ -55,6 +94,13 @@ class ConfigStore:
             self._sops[sop.id] = {}
         self._sops[sop.id][sop.version] = sop
         self._persist()
+
+        # Fire storage hook
+        hook_ctx = HookContext(
+            correlation_id=str(uuid.uuid4()),
+            metadata={"sop_id": sop.id, "sop_version": sop.version},
+        )
+        self._fire_hook("on_sop_saved", hook_ctx, sop)
 
     def get_sop(self, sop_id: str, version: str | None = None) -> ProcessConfig | None:
         """
@@ -71,14 +117,24 @@ class ConfigStore:
             return None
 
         versions = self._sops[sop_id]
-        if version:
-            return versions.get(version)
+        sop: ProcessConfig | None = None
 
-        # Return latest version
-        if not versions:
-            return None
-        latest_version = max(versions.keys(), key=self._version_key)
-        return versions[latest_version]
+        if version:
+            sop = versions.get(version)
+        elif versions:
+            # Return latest version
+            latest_version = max(versions.keys(), key=self._version_key)
+            sop = versions[latest_version]
+
+        # Fire storage hook if SOP was found
+        if sop is not None:
+            hook_ctx = HookContext(
+                correlation_id=str(uuid.uuid4()),
+                metadata={"sop_id": sop.id, "sop_version": sop.version},
+            )
+            self._fire_hook("on_sop_loaded", hook_ctx, sop)
+
+        return sop
 
     def list_sops(self, domain: str | None = None) -> list[tuple[str, str]]:
         """

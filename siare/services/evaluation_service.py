@@ -1,9 +1,11 @@
 """Evaluation Service - Runs metrics on execution traces"""
 
+import asyncio
 import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, cast
 
+from siare.core.hooks import HookContext, HookRegistry, fire_evaluation_hook
 from siare.core.models import (
     AggregatedMetric,
     AggregationMethod,
@@ -197,6 +199,39 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
         # Register built-in metrics
         self._register_builtin_metrics()
 
+    def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+        """Fire an evaluation hook from sync context.
+
+        Safely runs async hooks from synchronous code. If no hooks are registered,
+        returns immediately with zero overhead. Errors are logged but don't propagate.
+
+        Args:
+            hook_name: Name of the hook method (e.g., "on_evaluation_complete").
+            ctx: Hook context with correlation ID and metadata.
+            *args: Arguments for the hook.
+            **kwargs: Keyword arguments for the hook.
+
+        Returns:
+            Hook result, or None if no hooks registered or hook failed.
+        """
+        # Fast path: no hooks registered = no overhead
+        if HookRegistry.get_evaluation_hooks() is None:
+            return None
+
+        try:
+            # Try to get existing event loop (may be running in async context)
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context - create task but don't await
+                loop.create_task(fire_evaluation_hook(hook_name, ctx, *args, **kwargs))
+                return None
+            except RuntimeError:
+                # No running loop - create new one for sync context
+                return asyncio.run(fire_evaluation_hook(hook_name, ctx, *args, **kwargs))
+        except Exception as e:
+            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            return None
+
     def register_metric_function(
         self, metric_id: str, fn: Callable[[ExecutionTrace, dict[str, Any]], float]
     ) -> None:
@@ -230,6 +265,21 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
         Returns:
             EvaluationVector with metric results
         """
+        # Create hook context for this evaluation
+        hook_ctx = HookContext(
+            correlation_id=trace.run_id,
+            metadata={
+                "sop_id": trace.sop_id,
+                "sop_version": trace.sop_version,
+            },
+        )
+
+        # Get metric names for hook
+        metric_names = [m.id for m in metrics]
+
+        # Fire evaluation start hook
+        self._fire_hook("on_evaluation_start", hook_ctx, trace, metric_names)
+
         metric_results: list[MetricResult] = []
         artifacts = EvaluationArtifacts(
             llmFeedback={},
@@ -257,7 +307,7 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
                 )
 
         # Build evaluation vector
-        return EvaluationVector(
+        evaluation = EvaluationVector(
             sopId=trace.sop_id,
             sopVersion=trace.sop_version,
             promptGenomeId=prompt_genome_id,
@@ -267,6 +317,11 @@ Respond in JSON format: {{"score": X.X, "reasoning": "...", "inaccurate_citation
             artifacts=artifacts,
             taskMetadata=task_data,
         )
+
+        # Fire evaluation complete hook
+        self._fire_hook("on_evaluation_complete", hook_ctx, trace, evaluation)
+
+        return evaluation
 
     def _evaluate_metric(
         self,

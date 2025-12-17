@@ -67,6 +67,8 @@ class CorpusIndexManager:
                 "chromadb required for index management. "
                 "Install with: pip install chromadb"
             )
+        assert chromadb is not None  # Type narrowing for pyright
+        assert Settings is not None
 
         self.persist_dir = Path(persist_dir) if persist_dir else self.DEFAULT_PERSIST_DIR
         self.persist_dir.mkdir(parents=True, exist_ok=True)
@@ -93,6 +95,7 @@ class CorpusIndexManager:
                     "sentence-transformers required for embeddings. "
                     "Install with: pip install sentence-transformers"
                 )
+            assert SentenceTransformer is not None  # Type narrowing
             self._embedding_model = SentenceTransformer(self.embedding_model_name)
             logger.info(f"Loaded embedding model: {self.embedding_model_name}")
         return self._embedding_model

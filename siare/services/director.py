@@ -1,5 +1,6 @@
 """Director Service - AI-driven mutation proposals (Diagnostician + Architect)"""
 
+import asyncio
 import json
 import logging
 import re
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
     from siare.services.execution_engine import ExecutionTrace
     from siare.services.prompt_evolution.orchestrator import PromptEvolutionOrchestrator
 
+from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
 from siare.core.models import (
     Diagnosis,
     EvaluationVector,
@@ -1984,6 +1986,39 @@ class DirectorService:
             circuit_breaker=architect_breaker,
         )
 
+    def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+        """Fire an evolution hook from sync context.
+
+        Safely runs async hooks from synchronous code. If no hooks are registered,
+        returns immediately with zero overhead. Errors are logged but don't propagate.
+
+        Args:
+            hook_name: Name of the hook method (e.g., "on_mutation_complete").
+            ctx: Hook context with correlation ID and metadata.
+            *args: Arguments for the hook.
+            **kwargs: Keyword arguments for the hook.
+
+        Returns:
+            Hook result, or None if no hooks registered or hook failed.
+        """
+        # Fast path: no hooks registered = no overhead
+        if HookRegistry.get_evolution_hooks() is None:
+            return None
+
+        try:
+            # Try to get existing event loop (may be running in async context)
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context - create task but don't await
+                loop.create_task(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+                return None
+            except RuntimeError:
+                # No running loop - create new one for sync context
+                return asyncio.run(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+        except Exception as e:
+            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            return None
+
     def propose_improvements(
         self,
         sop_gene: SOPGene,
@@ -2007,15 +2042,36 @@ class DirectorService:
         Returns:
             (Diagnosis, SOPMutation) tuple
         """
+        # Create hook context for this evolution cycle
+        hook_ctx = HookContext(
+            correlation_id=str(uuid.uuid4()),
+            metadata={
+                "sop_id": sop_config.id,
+                "sop_version": sop_config.version,
+                "metrics": metrics_to_optimize,
+            },
+        )
 
         # Step 1: Diagnose
         diagnosis = self.diagnostician.diagnose(
             sop_gene, sop_config, prompt_genome, metrics_to_optimize
         )
 
+        # Fire mutation start hook (with diagnosis)
+        self._fire_hook("on_mutation_start", hook_ctx, sop_config, diagnosis)
+
         # Step 2: Propose mutation
         mutation = self.architect.propose_mutation(
             diagnosis, sop_config, prompt_genome, mutation_types, constraints
+        )
+
+        # Fire mutation complete hook
+        self._fire_hook(
+            "on_mutation_complete",
+            hook_ctx,
+            sop_config,  # original
+            mutation.newConfig,  # mutated
+            mutation.mutationType,
         )
 
         return diagnosis, mutation

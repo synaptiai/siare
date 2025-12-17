@@ -1,5 +1,6 @@
 """Execution Engine - Builds and runs SOP DAGs"""
 
+import asyncio
 import logging
 import re
 import signal
@@ -11,6 +12,7 @@ from datetime import datetime, timezone
 from types import FrameType
 from typing import TYPE_CHECKING, Any, ClassVar, Optional
 
+from siare.core.hooks import HookContext, HookRegistry, fire_execution_hook
 from siare.core.models import ProcessConfig, PromptGenome, RoleConfig
 
 if TYPE_CHECKING:
@@ -255,6 +257,40 @@ class ExecutionEngine:
             CircuitBreaker.TOOL_CIRCUIT_CONFIG,
         )
 
+    def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+        """Fire an execution hook from sync context.
+
+        Safely runs async hooks from synchronous code. If no hooks are registered,
+        returns immediately with zero overhead. Errors are logged but don't propagate.
+
+        Args:
+            hook_name: Name of the hook method (e.g., "on_execution_start").
+            ctx: Hook context with correlation ID and metadata.
+            *args: Arguments for the hook.
+            **kwargs: Keyword arguments for the hook.
+
+        Returns:
+            Hook result, or None if no hooks registered or hook failed.
+        """
+        # Fast path: no hooks registered = no overhead
+        if HookRegistry.get_execution_hooks() is None:
+            return None
+
+        try:
+            # Try to get existing event loop (may be running in async context)
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context - create task but don't await
+                # This is fire-and-forget for hooks
+                loop.create_task(fire_execution_hook(hook_name, ctx, *args, **kwargs))
+                return None
+            except RuntimeError:
+                # No running loop - create new one for sync context
+                return asyncio.run(fire_execution_hook(hook_name, ctx, *args, **kwargs))
+        except Exception as e:
+            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            return None
+
     def execute(
         self,
         sop: ProcessConfig,
@@ -282,6 +318,15 @@ class ExecutionEngine:
         """
         run_id = run_id or str(uuid.uuid4())
         trace = ExecutionTrace(run_id, sop.id, sop.version)
+
+        # Create hook context for this execution
+        hook_ctx = HookContext(
+            correlation_id=run_id,
+            metadata={"sop_id": sop.id, "sop_version": sop.version},
+        )
+
+        # Fire execution start hook
+        self._fire_hook("on_execution_start", hook_ctx, sop, task_input)
 
         try:
             # Inject feedback into prompts if configured
@@ -357,6 +402,16 @@ class ExecutionEngine:
                     cost=role_cost,
                 )
 
+                # Fire role complete hook
+                self._fire_hook(
+                    "on_role_complete",
+                    hook_ctx,
+                    role_id,
+                    role_inputs,
+                    role_outputs,
+                    duration_ms,
+                )
+
                 # Update state
                 state[role_id] = role_outputs
 
@@ -364,15 +419,28 @@ class ExecutionEngine:
             final_outputs = self._extract_final_outputs(sop, state)
             trace.finalize("completed", final_outputs)
 
+            # Fire execution complete hook (success path)
+            execution_duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000 if trace.end_time else 0.0
+            self._fire_hook("on_execution_complete", hook_ctx, sop, trace, execution_duration_ms)
+
         except ValueError as e:
             trace.add_error("system", f"ValueError: {e!s}")
             trace.finalize("failed", {})
+            # Fire execution complete hook (error path)
+            execution_duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000 if trace.end_time else 0.0
+            self._fire_hook("on_execution_complete", hook_ctx, sop, trace, execution_duration_ms)
         except KeyError as e:
             trace.add_error("system", f"KeyError: {e!s}")
             trace.finalize("failed", {})
+            # Fire execution complete hook (error path)
+            execution_duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000 if trace.end_time else 0.0
+            self._fire_hook("on_execution_complete", hook_ctx, sop, trace, execution_duration_ms)
         except Exception as e:
             trace.add_error("system", str(e))
             trace.finalize("failed", {})
+            # Fire execution complete hook (error path)
+            execution_duration_ms = (trace.end_time - trace.start_time).total_seconds() * 1000 if trace.end_time else 0.0
+            self._fire_hook("on_execution_complete", hook_ctx, sop, trace, execution_duration_ms)
 
         return trace
 

@@ -28,10 +28,13 @@ Respond with JSON:
 class CitationChecker:
     """Checks if citations accurately reference their sources."""
 
-    def __init__(self, llm_provider: Optional["LLMProvider"]):
+    DEFAULT_MODEL = "gpt-4o-mini"
+
+    def __init__(self, llm_provider: Optional["LLMProvider"], model: str = DEFAULT_MODEL):
         if llm_provider is None:
             raise RuntimeError("LLM provider required for citation checking")
         self._llm_provider = llm_provider
+        self._model = model
 
     def evaluate(self, answer: str, sources: dict[str, str]) -> CitationResult:
         """Evaluate citation accuracy in answer."""
@@ -83,7 +86,7 @@ class CitationChecker:
             source_content=source,
         )
         messages = [LLMMessage(role="user", content=prompt)]
-        response = self._llm_provider.complete(messages, temperature=0.0)
+        response = self._llm_provider.complete(messages, model=self._model, temperature=0.0)
 
         try:
             data = json.loads(response.content)

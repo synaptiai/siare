@@ -1,23 +1,36 @@
 """LLM Provider - Unified interface for OpenAI and Anthropic APIs"""
 
+import asyncio
+import logging
 import os
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
-try:
-    import openai
+from siare.core.hooks import HookContext, HookRegistry, fire_llm_hook
 
+logger = logging.getLogger(__name__)
+
+# Optional dependency handling - initialize as None to avoid "possibly unbound" errors
+openai: Any = None
+anthropic: Any = None
+openai_available = False
+anthropic_available = False
+
+try:
+    import openai as _openai
+    openai = _openai
     openai_available = True
 except ImportError:
-    openai_available = False
+    pass
 
 try:
-    import anthropic
-
+    import anthropic as _anthropic
+    anthropic = _anthropic
     anthropic_available = True
 except ImportError:
-    anthropic_available = False
+    pass
 
 
 @dataclass
@@ -105,6 +118,40 @@ def calculate_cost(model: str, usage: dict[str, int]) -> float:
     return cost
 
 
+def _fire_llm_hook(hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
+    """Fire an LLM hook from sync context.
+
+    Safely runs async hooks from synchronous code. If no hooks are registered,
+    returns immediately with zero overhead. Errors are logged but don't propagate.
+
+    Args:
+        hook_name: Name of the hook method (e.g., "on_llm_call_complete").
+        ctx: Hook context with correlation ID and metadata.
+        *args: Arguments for the hook.
+        **kwargs: Keyword arguments for the hook.
+
+    Returns:
+        Hook result, or None if no hooks registered or hook failed.
+    """
+    # Fast path: no hooks registered = no overhead
+    if HookRegistry.get_llm_hooks() is None:
+        return None
+
+    try:
+        # Try to get existing event loop (may be running in async context)
+        try:
+            loop = asyncio.get_running_loop()
+            # We're in an async context - create task but don't await
+            loop.create_task(fire_llm_hook(hook_name, ctx, *args, **kwargs))
+            return None
+        except RuntimeError:
+            # No running loop - create new one for sync context
+            return asyncio.run(fire_llm_hook(hook_name, ctx, *args, **kwargs))
+    except Exception as e:
+        logger.warning(f"Failed to fire hook {hook_name}: {e}")
+        return None
+
+
 class LLMProvider(ABC):
     """Abstract base class for LLM providers"""
 
@@ -183,13 +230,23 @@ class OpenAIProvider(LLMProvider):
     ) -> LLMResponse:
         """Generate completion using OpenAI API"""
 
+        # Create hook context for this LLM call
+        hook_ctx = HookContext(
+            correlation_id=str(uuid.uuid4()),
+            metadata={"provider": "openai"},
+        )
+
+        # Get actual model name
+        model_name = self.get_model_name(model)
+
+        # Fire LLM request hook
+        openai_msgs = [{"role": msg.role, "content": msg.content} for msg in messages]
+        _fire_llm_hook("on_llm_request", hook_ctx, provider="openai", model=model_name, messages=openai_msgs)
+
         # Convert to OpenAI format
         openai_messages: list[dict[str, Any]] = [
             {"role": msg.role, "content": msg.content} for msg in messages
         ]
-
-        # Get actual model name
-        model_name = self.get_model_name(model)
 
         # Build API call parameters - only include max_tokens if specified
         api_params: dict[str, Any] = {
@@ -218,14 +275,27 @@ class OpenAIProvider(LLMProvider):
                 "completion_tokens": int(response.usage.completion_tokens),  # type: ignore[misc]
                 "total_tokens": int(response.usage.total_tokens),  # type: ignore[misc]
             }
-            return LLMResponse(
+            cost = calculate_cost(str(response.model), usage)  # type: ignore[misc]
+            llm_response = LLMResponse(
                 content=content,
                 model=str(response.model),  # type: ignore[misc]
                 usage=usage,
                 finish_reason=str(choice.finish_reason),  # type: ignore[misc]
-                raw_response=cast("Any", response),
-                cost=calculate_cost(str(response.model), usage),  # type: ignore[misc]
+                raw_response=response,
+                cost=cost,
             )
+
+            # Fire LLM response hook
+            _fire_llm_hook(
+                "on_llm_response", hook_ctx,
+                provider="openai",
+                model=llm_response.model,
+                tokens_in=usage["prompt_tokens"],
+                tokens_out=usage["completion_tokens"],
+                latency_ms=0.0,  # Not tracked at this level
+            )
+
+            return llm_response
 
         except openai.RateLimitError as e:  # type: ignore[attr-defined]
             raise RuntimeError(f"OpenAI rate limit exceeded: {e!s}") from e
@@ -293,6 +363,19 @@ class AnthropicProvider(LLMProvider):
     ) -> LLMResponse:
         """Generate completion using Anthropic API"""
 
+        # Create hook context for this LLM call
+        hook_ctx = HookContext(
+            correlation_id=str(uuid.uuid4()),
+            metadata={"provider": "anthropic"},
+        )
+
+        # Get actual model name
+        model_name = self.get_model_name(model)
+
+        # Fire LLM request hook
+        anthropic_msgs = [{"role": msg.role, "content": msg.content} for msg in messages]
+        _fire_llm_hook("on_llm_request", hook_ctx, provider="anthropic", model=model_name, messages=anthropic_msgs)
+
         # Separate system message
         system_message: str | None = None
         anthropic_messages: list[dict[str, Any]] = []
@@ -302,9 +385,6 @@ class AnthropicProvider(LLMProvider):
                 system_message = msg.content
             else:
                 anthropic_messages.append({"role": msg.role, "content": msg.content})
-
-        # Get actual model name
-        model_name = self.get_model_name(model)
 
         # Default max_tokens for Anthropic
         if max_tokens is None:
@@ -323,7 +403,7 @@ class AnthropicProvider(LLMProvider):
         # Extract response
         content = ""
         for block in response.content:  # type: ignore[misc]
-            block_any: Any = cast("Any", block)
+            block_any: Any = block
             if hasattr(block_any, "text"):
                 content += str(block_any.text)  # type: ignore[misc]
 
@@ -332,14 +412,27 @@ class AnthropicProvider(LLMProvider):
             "completion_tokens": int(response.usage.output_tokens),  # type: ignore[misc]
             "total_tokens": int(response.usage.input_tokens + response.usage.output_tokens),  # type: ignore[misc]
         }
-        return LLMResponse(
+        cost = calculate_cost(str(response.model), usage)  # type: ignore[misc]
+        llm_response = LLMResponse(
             content=content,
             model=str(response.model),  # type: ignore[misc]
             usage=usage,
             finish_reason=str(response.stop_reason),  # type: ignore[misc]
-            raw_response=cast("Any", response),
-            cost=calculate_cost(str(response.model), usage),  # type: ignore[misc]
+            raw_response=response,
+            cost=cost,
         )
+
+        # Fire LLM response hook
+        _fire_llm_hook(
+            "on_llm_response", hook_ctx,
+            provider="anthropic",
+            model=llm_response.model,
+            tokens_in=usage["prompt_tokens"],
+            tokens_out=usage["completion_tokens"],
+            latency_ms=0.0,  # Not tracked at this level
+        )
+
+        return llm_response
 
     def get_model_name(self, model_ref: str) -> str:
         """Map model reference to Anthropic model name"""

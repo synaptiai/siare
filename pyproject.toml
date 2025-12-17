@@ -133,9 +133,19 @@ known-first-party = ["siare"]
 # Pyright configuration
 [tool.pyright]
 include = ["siare"]
+exclude = ["siare/benchmarks"]  # Benchmarks module uses many optional deps
 pythonVersion = "3.10"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
+# Relax for external library types (chromadb, sentence-transformers, etc.)
+reportUnknownMemberType = "warning"
+reportUnknownVariableType = "warning"
+reportUnknownArgumentType = "warning"
+reportUnknownParameterType = "warning"
+# Keep strict for actual code issues
+reportPossiblyUnboundVariable = true
+reportMissingImports = true
+reportPrivateUsage = true
 
 # Pytest configuration
 [tool.pytest.ini_options]
