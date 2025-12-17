@@ -769,7 +769,7 @@ python diagnose.py
    # Common missing packages:
    pip install openai          # For OpenAI provider
    pip install anthropic       # For Anthropic provider
-   pip install fastapi uvicorn # For API server
+   pip install fastapi uvicorn # For API server (siare-cloud)
    ```
 
 5. **Check PYTHONPATH:**
@@ -809,9 +809,11 @@ python diagnose.py
 
 ---
 
-### API Server Issues
+### API Server Issues 🔒
 
-#### Server Won't Start
+> **Note**: The REST API server is an enterprise feature available in siare-cloud. The open-source core provides CLI and Python library interfaces.
+
+#### Server Won't Start (siare-cloud)
 
 **Symptoms:**
 - `uvicorn: command not found`
@@ -834,7 +836,7 @@ python diagnose.py
    kill -9 <PID>
 
    # Or use different port
-   uvicorn siare.api.server:app --port 8001
+   uvicorn siare_cloud.api.server:app --port 8001
    ```
 
 3. **Check environment variables:**
@@ -1194,7 +1196,7 @@ SIARE_LOG_LEVEL=DEBUG
 EOF
 
 # Load automatically (if using python-dotenv)
-# Already configured in siare.api.server
+# Already configured in siare_cloud.api.server (enterprise)
 ```
 
 ---
@@ -1215,8 +1217,8 @@ pytest -v -s                           # Verbose with output
 pytest --lf                            # Last failed
 
 # Start services
-ollama serve                           # Ollama server
-uvicorn siare.api.server:app --reload  # API server
+ollama serve                                # Ollama server
+uvicorn siare_cloud.api.server:app --reload # API server (enterprise)
 
 # Environment
 source venv/bin/activate               # Activate venv

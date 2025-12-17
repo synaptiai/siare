@@ -465,7 +465,9 @@ Job checkpointing for fault tolerance:
 
 ---
 
-## 10. API Reference Summary
+## 10. API Reference Summary 🔒
+
+> **Enterprise Feature**: The REST API server is available in siare-cloud. The open-source core provides CLI (`siare init`, `siare evolve`, `siare run`) and Python library interfaces.
 
 ### 10.1 Core Endpoints
 

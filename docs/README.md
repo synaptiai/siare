@@ -67,16 +67,22 @@ docs/
 └── README.md                      # This file
 ```
 
-## API Reference
+## API Server 🔒
 
-SIARE provides a FastAPI server with auto-generated documentation:
+> **Enterprise Feature**: The REST API server is available in siare-cloud.
+
+The open-source core provides:
+- **CLI interface**: `siare init`, `siare evolve`, `siare run`
+- **Python library**: Direct import and use of all services
 
 ```bash
-# Start the server
-uvicorn siare.api.server:app --reload
+# CLI usage (open-source)
+siare init
+siare evolve --generations 10
+siare run "Your query here"
 
-# View API docs
-open http://localhost:8000/docs
+# Python library usage (open-source)
+from siare.services import DirectorService, GenePool, ExecutionEngine
 ```
 
 ## Quick Links
