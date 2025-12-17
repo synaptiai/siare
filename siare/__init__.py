@@ -33,7 +33,8 @@ from siare.core.models import (
     MutationType,
     ProcessConfig,
     PromptGenome,
-    Role,
+    RoleConfig,
+    RolePrompt,
     SOPGene,
     Task,
 )
@@ -49,7 +50,8 @@ __all__ = [
     "__license__",
     # Core models
     "ProcessConfig",
-    "Role",
+    "RoleConfig",
+    "RolePrompt",
     "GraphEdge",
     "PromptGenome",
     "Task",

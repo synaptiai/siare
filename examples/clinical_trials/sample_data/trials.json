@@ -1,0 +1,95 @@
+[
+  {
+    "nct_id": "NCT04123456",
+    "title": "Phase 3 Study of Drug X in Advanced Breast Cancer",
+    "phase": "Phase 3",
+    "status": "Completed",
+    "condition": "Breast Cancer",
+    "intervention": "Drug X (oral, 100mg daily)",
+    "enrollment": 450,
+    "primary_outcome": "Progression-free survival",
+    "results": {
+      "pfs_months": 12.3,
+      "pfs_control": 8.1,
+      "hazard_ratio": 0.65,
+      "p_value": 0.002
+    },
+    "adverse_events": [
+      {
+        "name": "Fatigue",
+        "rate": 0.32,
+        "control_rate": 0.18
+      },
+      {
+        "name": "Nausea",
+        "rate": 0.24,
+        "control_rate": 0.12
+      },
+      {
+        "name": "Neutropenia",
+        "rate": 0.18,
+        "control_rate": 0.04
+      }
+    ]
+  },
+  {
+    "nct_id": "NCT04234567",
+    "title": "Immunotherapy Combination in Triple-Negative Breast Cancer",
+    "phase": "Phase 2",
+    "status": "Active",
+    "condition": "Triple-Negative Breast Cancer",
+    "intervention": "Pembrolizumab + Chemotherapy",
+    "enrollment": 180,
+    "primary_outcome": "Objective response rate",
+    "results": {
+      "orr": 0.42,
+      "orr_control": 0.28,
+      "dcr": 0.68
+    },
+    "adverse_events": [
+      {
+        "name": "Immune-related AEs",
+        "rate": 0.35,
+        "control_rate": 0.05
+      },
+      {
+        "name": "Fatigue",
+        "rate": 0.45,
+        "control_rate": 0.38
+      }
+    ]
+  },
+  {
+    "nct_id": "NCT04345678",
+    "title": "CDK4/6 Inhibitor in HR+ Metastatic Breast Cancer",
+    "phase": "Phase 3",
+    "status": "Completed",
+    "condition": "HR+ Metastatic Breast Cancer",
+    "intervention": "Palbociclib + Letrozole",
+    "enrollment": 666,
+    "primary_outcome": "Progression-free survival",
+    "results": {
+      "pfs_months": 24.8,
+      "pfs_control": 14.5,
+      "hazard_ratio": 0.58,
+      "p_value": 0.001
+    },
+    "adverse_events": [
+      {
+        "name": "Neutropenia",
+        "rate": 0.79,
+        "control_rate": 0.06
+      },
+      {
+        "name": "Leukopenia",
+        "rate": 0.39,
+        "control_rate": 0.02
+      },
+      {
+        "name": "Fatigue",
+        "rate": 0.37,
+        "control_rate": 0.28
+      }
+    ]
+  }
+]
