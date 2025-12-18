@@ -1,3 +1,10 @@
+---
+layout: default
+title: Custom Extensions
+parent: Guides
+nav_order: 3
+---
+
 # Custom Extensions
 
 Guide to extending SIARE with custom metrics, tools, and constraints.

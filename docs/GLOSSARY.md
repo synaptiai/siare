@@ -1,3 +1,9 @@
+---
+layout: default
+title: Glossary
+nav_order: 8
+---
+
 # SIARE Glossary
 
 Definitions of key terms used throughout the SIARE documentation.

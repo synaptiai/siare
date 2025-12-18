@@ -1,3 +1,10 @@
+---
+layout: default
+title: Data Models
+parent: Architecture
+nav_order: 2
+---
+
 # Complete Data Models Specification
 
 **Version:** 1.1

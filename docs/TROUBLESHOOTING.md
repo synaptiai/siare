@@ -1,3 +1,9 @@
+---
+layout: default
+title: Troubleshooting
+nav_order: 4
+---
+
 # SIARE Troubleshooting Guide
 
 This guide covers common issues and their solutions when working with SIARE (Self-Improving Agentic RAG Engine).

@@ -1,3 +1,10 @@
+---
+layout: default
+title: System Architecture
+parent: Architecture
+nav_order: 1
+---
+
 # SIARE System Architecture
 
 **Version:** 2.0 (Consolidated)

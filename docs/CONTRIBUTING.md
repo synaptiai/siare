@@ -1,3 +1,9 @@
+---
+layout: default
+title: Contributing
+nav_order: 10
+---
+
 # Contributing to SIARE
 
 Thank you for your interest in contributing to SIARE! This guide will help you get started.

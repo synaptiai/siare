@@ -1,3 +1,9 @@
+---
+layout: default
+title: Configuration
+nav_order: 3
+---
+
 # Configuration Reference
 
 Complete reference for configuring SIARE. All settings can be specified via:

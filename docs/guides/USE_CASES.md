@@ -1,3 +1,10 @@
+---
+layout: default
+title: Use Cases
+parent: Guides
+nav_order: 4
+---
+
 # Implementing Domain Use Cases in SIARE
 
 This guide explains how to implement domain-specific use cases in SIARE, using the **clinical trial design** use case as a concrete example. It provides a general pattern that can be applied to any domain requiring autonomous, self-improving multi-agent RAG systems.

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Why SIARE?
+nav_order: 9
+---
+
 # Why SIARE?
 
 **How SIARE compares to other RAG frameworks and what makes it unique.**

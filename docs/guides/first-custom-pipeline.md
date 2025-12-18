@@ -1,3 +1,10 @@
+---
+layout: default
+title: First Custom Pipeline
+parent: Guides
+nav_order: 1
+---
+
 # Your First Custom Pipeline
 
 This guide walks you through building a domain-specific RAG pipeline from scratch. By the end, you'll have a working pipeline tailored to your data and use case.

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Quickstart
+nav_order: 2
+---
+
 # SIARE Quick Start Guide
 
 Get a self-evolving RAG pipeline running in under 10 minutes.

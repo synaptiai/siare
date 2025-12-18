@@ -1,3 +1,10 @@
+---
+layout: default
+title: Prompt Engineering
+parent: Guides
+nav_order: 2
+---
+
 # Prompt Engineering for Multi-Agent Systems
 
 Guide to writing effective prompts for SIARE's multi-agent pipelines.
