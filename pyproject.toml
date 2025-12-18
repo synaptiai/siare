@@ -166,7 +166,11 @@ known-first-party = ["siare"]
 # Pyright configuration
 [tool.pyright]
 include = ["siare"]
-exclude = ["siare/benchmarks"]  # Benchmarks module uses many optional deps
+exclude = [
+    "siare/benchmarks",  # Benchmarks module uses many optional deps
+    "siare/adapters/vector_search.py",  # Optional: qdrant, pinecone, chromadb
+    "siare/adapters/web_search.py",  # Optional: duckduckgo_search
+]
 pythonVersion = "3.10"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
@@ -177,7 +181,7 @@ reportUnknownArgumentType = "warning"
 reportUnknownParameterType = "warning"
 # Keep strict for actual code issues
 reportPossiblyUnboundVariable = true
-reportMissingImports = true
+reportMissingImports = "warning"  # Warning not error for optional deps
 reportPrivateUsage = true
 
 # Pytest configuration
