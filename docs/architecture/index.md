@@ -17,5 +17,5 @@ SIARE follows an **open-core architecture**:
 
 ## Sections
 
-- [System Architecture](SYSTEM_ARCHITECTURE.html) - Complete system design and component interactions
-- [Data Models](DATA_MODELS.html) - All Pydantic models and their relationships
+- [System Architecture]({% link architecture/SYSTEM_ARCHITECTURE.md %}) - Complete system design and component interactions
+- [Data Models]({% link architecture/DATA_MODELS.md %}) - All Pydantic models and their relationships

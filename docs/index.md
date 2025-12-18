@@ -18,9 +18,9 @@ SIARE treats your RAG pipeline configuration as a searchable space and uses AI-d
 
 | Getting Started | Core Concepts | Guides |
 |-----------------|---------------|--------|
-| [Installation](QUICKSTART.html#installation) | [System Architecture](architecture/SYSTEM_ARCHITECTURE.html) | [First Custom Pipeline](guides/first-custom-pipeline.html) |
-| [Quickstart](QUICKSTART.html) | [Data Models](architecture/DATA_MODELS.html) | [Prompt Engineering](guides/prompt-engineering.html) |
-| [Configuration](CONFIGURATION.html) | [Glossary](GLOSSARY.html) | [Custom Extensions](guides/custom-extensions.html) |
+| [Installation]({% link QUICKSTART.md %}#installation) | [System Architecture]({% link architecture/SYSTEM_ARCHITECTURE.md %}) | [First Custom Pipeline]({% link guides/first-custom-pipeline.md %}) |
+| [Quickstart]({% link QUICKSTART.md %}) | [Data Models]({% link architecture/DATA_MODELS.md %}) | [Prompt Engineering]({% link guides/prompt-engineering.md %}) |
+| [Configuration]({% link CONFIGURATION.md %}) | [Glossary]({% link GLOSSARY.md %}) | [Custom Extensions]({% link guides/custom-extensions.md %}) |
 
 ---
 
@@ -55,7 +55,7 @@ For full features including LLM providers and embeddings:
 pip install siare[full]
 ```
 
-See [Quickstart](QUICKSTART.html) for detailed setup instructions.
+See [Quickstart]({% link QUICKSTART.md %}) for detailed setup instructions.
 
 ---
 
@@ -90,31 +90,31 @@ engine = ExecutionEngine(llm_provider)
 # Run evolution loop...
 ```
 
-See [Use Cases](guides/USE_CASES.html) for complete examples.
+See [Use Cases]({% link guides/USE_CASES.md %}) for complete examples.
 
 ---
 
 ## Documentation Sections
 
 ### Getting Started
-- [Quickstart Guide](QUICKSTART.html) - Installation and first pipeline
-- [Configuration](CONFIGURATION.html) - All configuration options
-- [Troubleshooting](TROUBLESHOOTING.html) - Common issues and solutions
+- [Quickstart Guide]({% link QUICKSTART.md %}) - Installation and first pipeline
+- [Configuration]({% link CONFIGURATION.md %}) - All configuration options
+- [Troubleshooting]({% link TROUBLESHOOTING.md %}) - Common issues and solutions
 
 ### Architecture
-- [System Architecture](architecture/SYSTEM_ARCHITECTURE.html) - How SIARE works
-- [Data Models](architecture/DATA_MODELS.html) - Core data structures
+- [System Architecture]({% link architecture/SYSTEM_ARCHITECTURE.md %}) - How SIARE works
+- [Data Models]({% link architecture/DATA_MODELS.md %}) - Core data structures
 
 ### Guides
-- [First Custom Pipeline](guides/first-custom-pipeline.html) - Build your first pipeline
-- [Prompt Engineering](guides/prompt-engineering.html) - Optimize prompts
-- [Custom Extensions](guides/custom-extensions.html) - Extend SIARE
-- [Use Cases](guides/USE_CASES.html) - Real-world examples
+- [First Custom Pipeline]({% link guides/first-custom-pipeline.md %}) - Build your first pipeline
+- [Prompt Engineering]({% link guides/prompt-engineering.md %}) - Optimize prompts
+- [Custom Extensions]({% link guides/custom-extensions.md %}) - Extend SIARE
+- [Use Cases]({% link guides/USE_CASES.md %}) - Real-world examples
 
 ### Reference
-- [Glossary](GLOSSARY.html) - Key terms and concepts
-- [Why SIARE?](WHY_SIARE.html) - Comparison with alternatives
-- [Contributing](CONTRIBUTING.html) - How to contribute
+- [Glossary]({% link GLOSSARY.md %}) - Key terms and concepts
+- [Why SIARE?]({% link WHY_SIARE.md %}) - Comparison with alternatives
+- [Contributing]({% link CONTRIBUTING.md %}) - How to contribute
 
 ---
 
