@@ -10,7 +10,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 authors = [{name = "Daniel Bentes", email = "daniel@synapti.ai"}]
 maintainers = [{name = "Daniel Bentes", email = "daniel@synapti.ai"}]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 keywords = [
     "rag",
     "retrieval-augmented-generation",
@@ -29,9 +29,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
@@ -171,7 +170,7 @@ exclude = [
     "siare/adapters/vector_search.py",  # Optional: qdrant, pinecone, chromadb
     "siare/adapters/web_search.py",  # Optional: duckduckgo_search
 ]
-pythonVersion = "3.10"
+pythonVersion = "3.12"
 typeCheckingMode = "strict"
 reportMissingTypeStubs = false
 # Relax for external library types (chromadb, sentence-transformers, etc.)
