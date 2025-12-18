@@ -1,8 +1,11 @@
 # SIARE - Self-Improving Agentic RAG Engine
 
-[![PyPI version](https://badge.fury.io/py/siare.svg)](https://badge.fury.io/py/siare)
+[![PyPI version](https://img.shields.io/pypi/v/siare.svg)](https://pypi.org/project/siare/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/siare.svg)](https://pypi.org/project/siare/)
+[![Python 3.12+](https://img.shields.io/pypi/pyversions/siare.svg)](https://pypi.org/project/siare/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/synaptiai/siare/actions/workflows/ci.yml/badge.svg)](https://github.com/synaptiai/siare/actions/workflows/ci.yml)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue.svg)](https://synaptiai.github.io/siare/)
 
 **Stop tuning RAG pipelines. Let them evolve.**
 
@@ -171,10 +174,11 @@ best = gene_pool.get_pareto_frontier()[0]
 
 ## Documentation
 
-- [Getting Started](docs/getting-started.md)
-- [CLI Reference](docs/cli-reference.md)
-- [Architecture](docs/architecture.md)
-- [API Reference](docs/api-reference.md)
+- [Quickstart Guide](https://synaptiai.github.io/siare/QUICKSTART.html)
+- [Configuration](https://synaptiai.github.io/siare/CONFIGURATION.html)
+- [System Architecture](https://synaptiai.github.io/siare/architecture/SYSTEM_ARCHITECTURE.html)
+- [Data Models](https://synaptiai.github.io/siare/architecture/DATA_MODELS.html)
+- [Guides](https://synaptiai.github.io/siare/guides/)
 
 ## Contributing
 
