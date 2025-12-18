@@ -7,7 +7,8 @@ name = "siare"
 version = "1.0.0"
 description = "Self-Improving Agentic RAG Engine - Evolve multi-agent RAG pipelines using Quality-Diversity optimization"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Daniel Bentes", email = "daniel@synapti.ai"}]
 maintainers = [{name = "Daniel Bentes", email = "daniel@synapti.ai"}]
 requires-python = ">=3.12"
@@ -26,7 +27,6 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
