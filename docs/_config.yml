@@ -4,36 +4,22 @@ description: Self-Improving Agentic RAG Engine - Documentation
 url: https://synaptiai.github.io
 baseurl: /siare
 
-# Theme - just-the-docs provides clean navigation and search
+# Theme
 remote_theme: just-the-docs/just-the-docs
 
 # Color scheme
 color_scheme: light
-
-# Logo and branding
-logo: "/assets/images/logo.svg"
 
 # Search
 search_enabled: true
 search:
   heading_level: 2
   previews: 3
-  preview_words_before: 5
-  preview_words_after: 10
-  tokenizer_separator: /[\s/]+/
-  rel_url: true
-  button: false
-
-# Navigation
-nav_enabled: true
-nav_sort: case_insensitive
 
 # Aux links (top right)
 aux_links:
-  "GitHub":
-    - "https://github.com/synaptiai/siare"
-  "PyPI":
-    - "https://pypi.org/project/siare/"
+  "GitHub": "https://github.com/synaptiai/siare"
+  "PyPI": "https://pypi.org/project/siare/"
 
 aux_links_new_tab: true
 
@@ -47,20 +33,6 @@ back_to_top_text: "Back to top"
 # Heading anchor links
 heading_anchors: true
 
-# Code highlighting
-highlighter: rouge
-kramdown:
-  syntax_highlighter: rouge
-  syntax_highlighter_opts:
-    block:
-      line_numbers: false
-
-# Collections for organizing content
-collections:
-  guides:
-    output: true
-    permalink: /:collection/:name
-
 # Exclude from processing
 exclude:
   - Gemfile
@@ -70,5 +42,5 @@ exclude:
 
 # Plugins
 plugins:
+  - jekyll-remote-theme
   - jekyll-seo-tag
-  - jekyll-github-metadata
