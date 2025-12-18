@@ -1,7 +1,6 @@
 # SIARE - Self-Improving Agentic RAG Engine
 
 [![PyPI version](https://img.shields.io/pypi/v/siare.svg)](https://pypi.org/project/siare/)
-[![PyPI downloads](https://img.shields.io/pypi/dm/siare.svg)](https://pypi.org/project/siare/)
 [![Python 3.12+](https://img.shields.io/pypi/pyversions/siare.svg)](https://pypi.org/project/siare/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/synaptiai/siare/actions/workflows/ci.yml/badge.svg)](https://github.com/synaptiai/siare/actions/workflows/ci.yml)
