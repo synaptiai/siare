@@ -657,7 +657,7 @@ class EvolutionBenchmarkRunner:
                 return None
 
             # Mann-Whitney U test (non-parametric)
-            stat, p_value = stats.mannwhitneyu(
+            _stat, p_value = stats.mannwhitneyu(
                 baseline, evolved, alternative="two-sided"
             )
             return float(p_value)

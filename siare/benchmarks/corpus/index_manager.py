@@ -151,7 +151,7 @@ class CorpusIndexManager:
             for doc in batch:
                 doc_meta = {k: v for k, v in doc.items() if k not in ["doc_id", "text"]}
                 # Ensure all values are serializable
-                doc_meta = {k: str(v) if not isinstance(v, (str, int, float, bool)) else v
+                doc_meta = {k: str(v) if not isinstance(v, str | int | float | bool) else v
                            for k, v in doc_meta.items()}
                 # ChromaDB requires non-empty metadata or None
                 if not doc_meta:

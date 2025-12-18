@@ -28,7 +28,7 @@ def radar_chart_static(
     angles = [n / float(N) * 2 * np.pi for n in range(N)]
     angles += angles[:1]  # Complete the circle
 
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"polar": True})
+    _fig, ax = plt.subplots(figsize=(8, 8), subplot_kw={"polar": True})
 
     # SIARE metrics
     values = list(metrics.values())
@@ -84,7 +84,7 @@ def beir_comparison_bar_static(
     datasets = list(results.keys())
     scores = [results[d].get(metric, 0) for d in datasets]
 
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _fig, ax = plt.subplots(figsize=(12, 6))
 
     bars = ax.bar(datasets, scores, color="#1f77b4", edgecolor="black")
 
@@ -130,7 +130,7 @@ def evolution_progress_static(
     gen_numbers = list(range(len(generations)))
     scores = [g.get(metric, 0) for g in generations]
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    _fig, ax = plt.subplots(figsize=(10, 6))
 
     ax.plot(gen_numbers, scores, "o-", linewidth=2, markersize=8, color="#1f77b4")
 

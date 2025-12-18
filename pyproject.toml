@@ -145,7 +145,6 @@ ignore = [
     "SIM108",  # ternary operators (if-else often clearer)
     "A002",    # builtin shadowing (sometimes unavoidable)
     "B007",    # unused loop variable (minor)
-    "UP038",   # isinstance style (minor)
     "C401",    # generator comprehension style (minor)
     "RUF015",  # iterator style (minor)
     "SIM118",  # dict.keys() (explicit is fine)
