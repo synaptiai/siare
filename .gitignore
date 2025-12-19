@@ -71,6 +71,7 @@ venv.bak/
 
 # SIARE specific
 .siare/
+.worktrees/
 siare.yaml
 example_docs/
 *.log
