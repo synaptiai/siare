@@ -950,7 +950,7 @@ class EvolutionScheduler:
                 "Agentic evolution initialized (mode=%s, supervisor=%s)",
                 config.mode, config.enableSupervisor,
             )
-        except ImportError as e:
+        except (ImportError, AttributeError) as e:
             logger.warning("Agentic evolution components not available: %s", e)
 
     def _should_use_agentic(self) -> bool:

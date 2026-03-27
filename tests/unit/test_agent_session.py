@@ -516,6 +516,40 @@ class TestAgentSessionMessagePruning:
         assert user_msgs[-1].content == "Turn 5"
 
 
+class TestAgentSessionMessageValidation:
+    """Tests for max_messages validation."""
+
+    def test_max_messages_below_2_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=1,
+            )
+
+    def test_max_messages_zero_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=0,
+            )
+
+    def test_max_messages_negative_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=-5,
+            )
+
+
 class TestAgentSessionContextInjection:
     """Tests for mid-session context injection."""
 

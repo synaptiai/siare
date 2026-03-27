@@ -107,7 +107,7 @@ class AgentSession:
             return
         system_msg = self._messages[0]
         keep = self.max_messages - 1  # Reserve 1 slot for system prompt
-        self._messages = [system_msg] + self._messages[-keep:]
+        self._messages = [system_msg, *self._messages[-keep:]]
 
     def turn(self, user_message: str) -> str:
         """Execute one conversational turn.
@@ -148,6 +148,7 @@ class AgentSession:
                 LLMMessage(role="user", content=results_text)
             )
 
+        self._prune_messages()
         return self._last_assistant_content()
 
     def _call_llm(self) -> LLMResponse:
