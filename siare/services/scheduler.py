@@ -18,7 +18,12 @@ logger = logging.getLogger(__name__)
 
 from siare.core.config import ConvergenceConfig
 from siare.core.constants import MIN_PARENTS_FOR_CROSSOVER
-from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
+from siare.core.hooks import (
+    HookContext,
+    HookRegistry,
+    fire_evolution_hook,
+    make_task_done_callback,
+)
 from siare.core.models import (
     AgenticVariationConfig,
     AggregatedMetric,
@@ -180,15 +185,7 @@ class EvolutionScheduler:
                     fire_evolution_hook(hook_name, ctx, *args, **kwargs)
                 )
                 task.add_done_callback(
-                    lambda t: (
-                        logger.warning(
-                            "Hook %s failed: %s",
-                            hook_name,
-                            t.exception(),
-                        )
-                        if not t.cancelled() and t.exception()
-                        else None
-                    )
+                    make_task_done_callback(hook_name)
                 )
                 return None
             except RuntimeError:

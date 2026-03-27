@@ -12,7 +12,12 @@ if TYPE_CHECKING:
     from siare.services.execution_engine import ExecutionTrace
     from siare.services.prompt_evolution.orchestrator import PromptEvolutionOrchestrator
 
-from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
+from siare.core.hooks import (
+    HookContext,
+    HookRegistry,
+    fire_evolution_hook,
+    make_task_done_callback,
+)
 from siare.core.models import (
     Diagnosis,
     EvaluationVector,
@@ -2021,20 +2026,14 @@ class DirectorService:
                     fire_evolution_hook(hook_name, ctx, *args, **kwargs)
                 )
                 task.add_done_callback(
-                    lambda t: (
-                        logger.warning(
-                            "Hook %s failed: %s", hook_name, t.exception()
-                        )
-                        if not t.cancelled() and t.exception()
-                        else None
-                    )
+                    make_task_done_callback(hook_name)
                 )
                 return None
             except RuntimeError:
                 # No running loop - create new one for sync context
                 return asyncio.run(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
         except Exception as e:
-            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            logger.warning("Failed to fire hook %s: %s", hook_name, e)
             return None
 
     def propose_improvements(

@@ -84,7 +84,7 @@ class AgentSession:
         )
         self.max_tool_rounds = max_tool_rounds
         self.temperature = temperature
-        self.max_messages = max_messages
+        self._max_messages = max_messages
 
         self._messages: list[LLMMessage] = [
             LLMMessage(role="system", content=system_prompt),
@@ -101,9 +101,14 @@ class AgentSession:
         """Record of all tool calls made in this session."""
         return list(self._tool_calls_made)
 
+    @property
+    def max_messages(self) -> int:
+        """Maximum messages to retain (system prompt + last N)."""
+        return self._max_messages
+
     def _prune_messages(self) -> None:
         """Prune to max_messages total (system prompt + last N)."""
-        if len(self._messages) <= self.max_messages:
+        if len(self._messages) <= self._max_messages:
             return
         system_msg = self._messages[0]
         keep = self.max_messages - 1  # Reserve 1 slot for system prompt

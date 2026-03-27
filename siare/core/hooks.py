@@ -699,3 +699,19 @@ async def fire_agentic_evolution_hook(
         return None
     hook_fn = getattr(hooks, hook_name, None)
     return await HookRunner.run(hook_fn, ctx, *args, **kwargs)
+
+
+def make_task_done_callback(hook_name: str) -> Any:
+    """Create a done callback for fire-and-forget hook tasks.
+
+    Logs a warning if the task raised an exception, without
+    breaking the fire-and-forget contract.
+
+    Usage:
+        task = loop.create_task(fire_evolution_hook(...))
+        task.add_done_callback(make_task_done_callback(hook_name))
+    """
+    def _callback(t: Any) -> None:
+        if not t.cancelled() and t.exception():
+            logger.warning("Hook %s failed: %s", hook_name, t.exception())
+    return _callback

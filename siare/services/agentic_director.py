@@ -18,7 +18,11 @@ import logging
 import uuid
 from typing import TYPE_CHECKING, Any
 
-from siare.core.hooks import HookContext, fire_agentic_evolution_hook
+from siare.core.hooks import (
+    HookContext,
+    fire_agentic_evolution_hook,
+    make_task_done_callback,
+)
 from siare.core.models import (
     AgenticVariationConfig,
     MutationType,
@@ -455,15 +459,7 @@ class AgenticDirector:
                     )
                 )
                 task.add_done_callback(
-                    lambda t: (
-                        logger.warning(
-                            "Agentic hook %s failed: %s",
-                            hook_name,
-                            t.exception(),
-                        )
-                        if not t.cancelled() and t.exception()
-                        else None
-                    )
+                    make_task_done_callback(hook_name)
                 )
                 return None
             except RuntimeError:
