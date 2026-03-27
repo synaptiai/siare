@@ -298,8 +298,15 @@ class AgenticComparisonReport:
             return None
         best: float | None = None
         for metric_data in improvements.values():
-            pct = metric_data.get("improvement_pct")
-            if pct is not None and (best is None or pct > best):
+            raw = metric_data.get("improvement_pct")
+            if raw is None:
+                continue
+            # Handle both float and string formats ("21.8%")
+            if isinstance(raw, str):
+                pct = float(raw.rstrip("%"))
+            else:
+                pct = float(raw)
+            if best is None or pct > best:
                 best = pct
         return best
 
