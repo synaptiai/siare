@@ -22,6 +22,7 @@ For advanced usage, use the core models directly:
 
 from siare.builders import edge, pipeline, role, task
 from siare.core.hooks import (
+    AgenticEvolutionHooks,
     EvaluationHooks,
     EvolutionHooks,
     ExecutionHooks,
@@ -32,9 +33,11 @@ from siare.core.hooks import (
     StorageHooks,
 )
 from siare.core.models import (
+    AgenticVariationConfig,
     Diagnosis,
     EvaluationVector,
     GraphEdge,
+    InnerLoopBudget,
     MetricConfig,
     MutationType,
     ProcessConfig,
@@ -42,7 +45,9 @@ from siare.core.models import (
     RoleConfig,
     RolePrompt,
     SOPGene,
+    SupervisorDirective,
     Task,
+    VariationResult,
 )
 
 __version__ = "1.0.0"
@@ -76,8 +81,14 @@ __all__ = [
     "HookRegistry",
     "HookRunner",
     "EvolutionHooks",
+    "AgenticEvolutionHooks",
     "ExecutionHooks",
     "EvaluationHooks",
     "StorageHooks",
     "LLMHooks",
+    # Agentic variation (hybrid evolution)
+    "AgenticVariationConfig",
+    "InnerLoopBudget",
+    "VariationResult",
+    "SupervisorDirective",
 ]

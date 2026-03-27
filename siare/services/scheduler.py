@@ -20,6 +20,7 @@ from siare.core.config import ConvergenceConfig
 from siare.core.constants import MIN_PARENTS_FOR_CROSSOVER
 from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
 from siare.core.models import (
+    AgenticVariationConfig,
     AggregatedMetric,
     AggregationMethod,
     EvaluationVector,
@@ -30,6 +31,7 @@ from siare.core.models import (
     PromptGenome,
     SelectionStrategy,
     SOPGene,
+    SupervisorDirective,
     TaskSet,
 )
 from siare.services.config_store import ConfigStore
@@ -78,6 +80,7 @@ class EvolutionScheduler:
         retry_handler: RetryHandler | None = None,
         convergence_config: ConvergenceConfig | None = None,
         parallel_offspring: bool = False,
+        agentic_config: AgenticVariationConfig | None = None,
     ):
         """
         Initialize Scheduler
@@ -94,6 +97,7 @@ class EvolutionScheduler:
             retry_handler: Retry handler for file I/O (creates default if None)
             convergence_config: Convergence detection settings (uses defaults if None)
             parallel_offspring: If True, evaluate offspring in parallel (default: False)
+            agentic_config: Optional agentic variation config for hybrid evolution
         """
         self.config_store = config_store
         self.parallel_offspring = parallel_offspring
@@ -102,6 +106,18 @@ class EvolutionScheduler:
         self.execution_engine = execution_engine
         self.evaluation_service = evaluation_service
         self.director_service = director_service
+
+        # Agentic variation (hybrid evolution)
+        self.agentic_config = agentic_config
+        self._agentic_director: Any | None = None
+        self._supervisor: Any | None = None
+        self._current_directive: SupervisorDirective | None = None
+        self._redirections_this_phase = 0
+        self._using_agentic_mode = False
+        self._redirection_cooldown = 0  # Generations to skip before next stagnation check
+
+        if agentic_config:
+            self._init_agentic_components(agentic_config)
 
         # Selection strategy factory
         self.selection_factory = SelectionStrategyFactory()
@@ -504,10 +520,19 @@ class EvolutionScheduler:
         offspring: list[SOPGene] = []
         diagnoses: list[dict[str, Any]] = []
 
+        use_agentic = self._should_use_agentic()
+
         for parent_id, parent_version in parents:
-            result = self._generate_offspring(
-                parent_id, parent_version, phase.allowedMutationTypes, job.constraints
-            )
+            if use_agentic:
+                result = self._generate_offspring_agentic(
+                    parent_id, parent_version,
+                    phase.allowedMutationTypes, job.constraints,
+                )
+            else:
+                result = self._generate_offspring(
+                    parent_id, parent_version,
+                    phase.allowedMutationTypes, job.constraints,
+                )
 
             if result:
                 child_gene, diagnosis_info = result
@@ -866,6 +891,222 @@ class EvolutionScheduler:
             # Catch selection-specific errors: invalid state, runtime issues, empty pools
             logger.warning(f"Selection strategy {strategy} failed: {e}. Returning empty parent list")
             return []
+
+    def _init_agentic_components(self, config: AgenticVariationConfig) -> None:
+        """Initialize agentic director and supervisor if configured."""
+        try:
+            from siare.services.agentic_director import AgenticDirector
+            from siare.services.knowledge_base import KnowledgeBase
+            from siare.services.supervisor import SupervisorAgent
+            from siare.services.variation_tools import VariationToolRegistry
+
+            kb: KnowledgeBase | None = None
+            if config.enableKnowledgeBase:
+                kb = KnowledgeBase(knowledge_dir=config.knowledgeDir)
+                kb.load_builtin_knowledge()
+                if config.knowledgeDir:
+                    kb.load_from_directory()
+
+            registry = VariationToolRegistry(
+                gene_pool=self.gene_pool,
+                execution_engine=self.execution_engine,
+                knowledge_base=kb,
+                enabled_tools=config.enabledTools,
+            )
+
+            llm_provider = getattr(self.director_service, "llm_provider", None)
+            if llm_provider is None:
+                llm_provider = getattr(
+                    getattr(self.director_service, "diagnostician", None),
+                    "llm_provider", None,
+                )
+
+            if llm_provider:
+                self._agentic_director = AgenticDirector(
+                    llm_provider=llm_provider,
+                    config=config,
+                    tool_registry=registry,
+                )
+
+                if config.enableSupervisor:
+                    self._supervisor = SupervisorAgent(
+                        llm_provider=llm_provider,
+                        gene_pool=self.gene_pool,
+                        qd_grid=self.qd_grid,
+                        model=config.agentModel,
+                    )
+
+                if config.mode == "agentic":
+                    self._using_agentic_mode = True
+
+                logger.info(
+                    "Agentic evolution initialized (mode=%s, supervisor=%s)",
+                    config.mode, config.enableSupervisor,
+                )
+            else:
+                logger.warning(
+                    "Could not extract LLM provider from DirectorService; "
+                    "agentic evolution disabled"
+                )
+        except ImportError as e:
+            logger.warning("Agentic evolution components not available: %s", e)
+
+    def _should_use_agentic(self) -> bool:
+        """Determine whether to use agentic variation for this generation."""
+        if self._agentic_director is None:
+            return False
+        if self.agentic_config is None:
+            return False
+        if self.agentic_config.mode == "agentic":
+            return True
+        if self.agentic_config.mode == "adaptive":
+            return self._using_agentic_mode
+        return False
+
+    def _check_and_handle_stagnation(self) -> bool:
+        """Check for stagnation and invoke supervisor if needed.
+
+        Returns:
+            True if stagnation was detected and handled (don't stop),
+            False if no stagnation or supervisor unavailable.
+        """
+        if self._supervisor is None or self.agentic_config is None:
+            return False
+
+        # Cooldown: give the directive time to take effect
+        if self._redirection_cooldown > 0:
+            self._redirection_cooldown -= 1
+            return False
+
+        max_redirections = self.agentic_config.maxRedirectionsPerPhase
+        if self._redirections_this_phase >= max_redirections:
+            return False
+
+        conv = self.convergence_config
+        if len(self.best_quality_history) <= conv.convergence_window:
+            return False
+
+        recent = self.best_quality_history[-conv.convergence_window:]
+        if max(recent) - min(recent) >= conv.convergence_threshold:
+            return False
+
+        logger.info(
+            "Stagnation detected (window=%d, threshold=%.4f). "
+            "Invoking supervisor (redirection %d/%d).",
+            conv.convergence_window,
+            conv.convergence_threshold,
+            self._redirections_this_phase + 1,
+            max_redirections,
+        )
+
+        directive = self._supervisor.analyze_and_redirect(
+            quality_history=self.best_quality_history,
+            recent_generations=conv.convergence_window,
+            job_constraints=(
+                self.current_job.constraints.model_dump()
+                if self.current_job and self.current_job.constraints
+                else None
+            ),
+        )
+
+        self._current_directive = directive
+        self._redirections_this_phase += 1
+        self._redirection_cooldown = conv.convergence_window
+        self._using_agentic_mode = True
+
+        logger.info(
+            "Supervisor directive: strategy=%s, focus=%s, target=%s",
+            directive.strategy,
+            directive.focusArea,
+            directive.explorationTarget,
+        )
+        return True
+
+    def _generate_offspring_agentic(
+        self,
+        parent_id: str,
+        parent_version: str,
+        mutation_types: list[MutationType],
+        constraints: Any,
+    ) -> tuple[SOPGene, dict[str, Any]] | None:
+        """Generate offspring using AgenticDirector (multi-turn variation)."""
+        parent_gene = self.gene_pool.get_sop_gene(parent_id, parent_version)
+        if not parent_gene:
+            logger.error("Parent gene not found: %s@%s", parent_id, parent_version)
+            return None
+
+        parent_sop = self.config_store.get_sop(parent_id, parent_version)
+        if not parent_sop:
+            logger.error("Parent SOP not found: %s@%s", parent_id, parent_version)
+            return None
+
+        parent_genome = self.config_store.get_prompt_genome(
+            parent_gene.promptGenomeId, parent_gene.promptGenomeVersion
+        )
+        if not parent_genome:
+            logger.error("Parent genome not found")
+            return None
+
+        if self._agentic_director is None:
+            logger.error("Agentic director not initialized")
+            return None
+
+        result = self._agentic_director.vary(
+            parent_gene=parent_gene,
+            parent_config=parent_sop,
+            parent_genome=parent_genome,
+            metrics_to_optimize=(
+                self.current_job.metricsToOptimize if self.current_job else []
+            ),
+            mutation_types=mutation_types,
+            constraints=constraints.model_dump() if constraints else None,
+            directive=self._current_directive,
+        )
+
+        if not result.succeeded or result.mutation is None:
+            logger.info(
+                "Agentic variation produced no improvement (reason=%s, "
+                "iterations=%d)",
+                result.reason, result.iterationsUsed,
+            )
+            return None
+
+        mutation = result.mutation
+
+        self.config_store.save_sop(mutation.newConfig)
+        if mutation.newPromptGenome:
+            self.config_store.save_prompt_genome(mutation.newPromptGenome)
+
+        offspring = SOPGene(
+            sopId=mutation.newConfig.id,
+            version=mutation.newConfig.version,
+            parent={"sopId": parent_id, "version": parent_version},
+            promptGenomeId=(
+                mutation.newPromptGenome.id
+                if mutation.newPromptGenome
+                else parent_genome.id
+            ),
+            promptGenomeVersion=(
+                mutation.newPromptGenome.version
+                if mutation.newPromptGenome
+                else parent_genome.version
+            ),
+            configSnapshot=mutation.newConfig,
+            evaluations=[],
+            aggregatedMetrics={},
+        )
+
+        diagnosis_info: dict[str, Any] = {
+            "primary_weakness": "agentic_analysis",
+            "recommendations": [],
+            "root_cause": "identified by agentic director",
+            "mutation_type": mutation.mutationType.value,
+            "mutation_rationale": mutation.rationale,
+            "agentic_iterations": result.iterationsUsed,
+            "agentic_budget": result.innerBudgetUsed,
+        }
+
+        return offspring, diagnosis_info
 
     def _generate_offspring(
         self,
@@ -1449,7 +1690,10 @@ class EvolutionScheduler:
         conv = self.convergence_config
         if len(self.best_quality_history) > conv.convergence_window:
             recent = self.best_quality_history[-conv.convergence_window:]
-            if max(recent) - min(recent) < conv.convergence_threshold:  # Very little improvement
+            if max(recent) - min(recent) < conv.convergence_threshold:
+                # Try supervisor redirection before stopping
+                if self._check_and_handle_stagnation():
+                    return False  # Supervisor redirected, keep going
                 return True
 
         return False
@@ -1459,6 +1703,11 @@ class EvolutionScheduler:
 
         if job.currentPhaseIndex < len(job.phases) - 1:
             job.currentPhaseIndex += 1
+            self._redirections_this_phase = 0
+            self._redirection_cooldown = 0
+            self._current_directive = None
+            if self.agentic_config and self.agentic_config.mode == "adaptive":
+                self._using_agentic_mode = False
             logger.info(
                 f"Advancing to phase {job.currentPhaseIndex + 1}: {job.phases[job.currentPhaseIndex].name}"
             )

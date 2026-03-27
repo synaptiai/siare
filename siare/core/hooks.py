@@ -38,6 +38,8 @@ if TYPE_CHECKING:
         MutationType,
         ProcessConfig,
         SOPGene,
+        SupervisorDirective,
+        VariationResult,
     )
     from siare.services.execution_engine import ExecutionTrace
 
@@ -136,6 +138,80 @@ class EvolutionHooks(Protocol):
 
         Returns:
             True to continue evolution, False to stop early.
+        """
+        ...
+
+
+@runtime_checkable
+class AgenticEvolutionHooks(Protocol):
+    """Hooks for the agentic variation loop and supervisor.
+
+    These hooks fire during AgenticDirector.vary() sessions and
+    supervisor redirections. Separate from EvolutionHooks to maintain
+    backward compatibility — existing EvolutionHooks implementations
+    are unaffected.
+    """
+
+    async def on_variation_start(
+        self,
+        ctx: HookContext,
+        parent_sop: ProcessConfig,
+        directive: SupervisorDirective | None,
+    ) -> None:
+        """Called when an agentic variation session begins.
+
+        Args:
+            ctx: Hook context with correlation ID and metadata.
+            parent_sop: The parent SOP being varied.
+            directive: Supervisor directive guiding this variation, if any.
+        """
+        ...
+
+    async def on_variation_iteration(
+        self,
+        ctx: HookContext,
+        iteration: int,
+        quality: float | None,
+        improved: bool,
+    ) -> None:
+        """Called after each inner loop iteration of the agentic director.
+
+        Args:
+            ctx: Hook context with correlation ID and metadata.
+            iteration: Current iteration number (0-indexed).
+            quality: Dry-run quality score, or None if not evaluated.
+            improved: Whether this iteration improved over the parent.
+        """
+        ...
+
+    async def on_variation_complete(
+        self,
+        ctx: HookContext,
+        result: VariationResult,
+    ) -> None:
+        """Called when an agentic variation session completes.
+
+        Args:
+            ctx: Hook context with correlation ID and metadata.
+            result: The variation result (may be empty if no improvement).
+        """
+        ...
+
+    async def on_supervisor_redirect(
+        self,
+        ctx: HookContext,
+        directive: SupervisorDirective,
+        stagnation_generations: int,
+    ) -> bool:
+        """Called when the supervisor issues a redirection directive.
+
+        Args:
+            ctx: Hook context with correlation ID and metadata.
+            directive: The supervisor's exploration directive.
+            stagnation_generations: Number of generations without improvement.
+
+        Returns:
+            True to apply the directive, False to reject it.
         """
         ...
 
@@ -439,6 +515,7 @@ class HookRegistry:
     """
 
     _evolution_hooks: EvolutionHooks | None = None
+    _agentic_evolution_hooks: AgenticEvolutionHooks | None = None
     _execution_hooks: ExecutionHooks | None = None
     _evaluation_hooks: EvaluationHooks | None = None
     _storage_hooks: StorageHooks | None = None
@@ -453,6 +530,16 @@ class HookRegistry:
     def get_evolution_hooks(cls) -> EvolutionHooks | None:
         """Get registered evolution hooks."""
         return cls._evolution_hooks
+
+    @classmethod
+    def set_agentic_evolution_hooks(cls, hooks: AgenticEvolutionHooks) -> None:
+        """Register agentic evolution hooks."""
+        cls._agentic_evolution_hooks = hooks
+
+    @classmethod
+    def get_agentic_evolution_hooks(cls) -> AgenticEvolutionHooks | None:
+        """Get registered agentic evolution hooks."""
+        return cls._agentic_evolution_hooks
 
     @classmethod
     def set_execution_hooks(cls, hooks: ExecutionHooks) -> None:
@@ -498,6 +585,7 @@ class HookRegistry:
     def clear_all(cls) -> None:
         """Clear all registered hooks (useful for testing)."""
         cls._evolution_hooks = None
+        cls._agentic_evolution_hooks = None
         cls._execution_hooks = None
         cls._evaluation_hooks = None
         cls._storage_hooks = None
@@ -583,6 +671,30 @@ async def fire_llm_hook(
 ) -> Any:
     """Fire an LLM hook by name."""
     hooks = HookRegistry.get_llm_hooks()
+    if hooks is None:
+        return None
+    hook_fn = getattr(hooks, hook_name, None)
+    return await HookRunner.run(hook_fn, ctx, *args, **kwargs)
+
+
+async def fire_agentic_evolution_hook(
+    hook_name: str,
+    ctx: HookContext,
+    *args: Any,
+    **kwargs: Any,
+) -> Any:
+    """Fire an agentic evolution hook by name.
+
+    Args:
+        hook_name: Name of the hook method (e.g., "on_variation_start").
+        ctx: Hook context.
+        *args: Arguments for the hook.
+        **kwargs: Keyword arguments for the hook.
+
+    Returns:
+        Hook result, or None if no hooks registered.
+    """
+    hooks = HookRegistry.get_agentic_evolution_hooks()
     if hooks is None:
         return None
     hook_fn = getattr(hooks, hook_name, None)
