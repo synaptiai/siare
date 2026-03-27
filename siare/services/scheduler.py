@@ -914,40 +914,29 @@ class EvolutionScheduler:
                 enabled_tools=config.enabledTools,
             )
 
-            llm_provider = getattr(self.director_service, "llm_provider", None)
-            if llm_provider is None:
-                llm_provider = getattr(
-                    getattr(self.director_service, "diagnostician", None),
-                    "llm_provider", None,
-                )
+            llm_provider = self.director_service.llm_provider
 
-            if llm_provider:
-                self._agentic_director = AgenticDirector(
+            self._agentic_director = AgenticDirector(
+                llm_provider=llm_provider,
+                config=config,
+                tool_registry=registry,
+            )
+
+            if config.enableSupervisor:
+                self._supervisor = SupervisorAgent(
                     llm_provider=llm_provider,
-                    config=config,
-                    tool_registry=registry,
+                    gene_pool=self.gene_pool,
+                    qd_grid=self.qd_grid,
+                    model=config.agentModel,
                 )
 
-                if config.enableSupervisor:
-                    self._supervisor = SupervisorAgent(
-                        llm_provider=llm_provider,
-                        gene_pool=self.gene_pool,
-                        qd_grid=self.qd_grid,
-                        model=config.agentModel,
-                    )
+            if config.mode == "agentic":
+                self._using_agentic_mode = True
 
-                if config.mode == "agentic":
-                    self._using_agentic_mode = True
-
-                logger.info(
-                    "Agentic evolution initialized (mode=%s, supervisor=%s)",
-                    config.mode, config.enableSupervisor,
-                )
-            else:
-                logger.warning(
-                    "Could not extract LLM provider from DirectorService; "
-                    "agentic evolution disabled"
-                )
+            logger.info(
+                "Agentic evolution initialized (mode=%s, supervisor=%s)",
+                config.mode, config.enableSupervisor,
+            )
         except ImportError as e:
             logger.warning("Agentic evolution components not available: %s", e)
 

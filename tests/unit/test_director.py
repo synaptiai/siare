@@ -10,7 +10,7 @@ from siare.core.models import (
     RoleConfig,
     RolePrompt,
 )
-from siare.services.director import Architect
+from siare.services.director import Architect, DirectorService
 from siare.services.llm_provider import LLMMessage, LLMProvider, LLMResponse
 
 
@@ -352,3 +352,20 @@ EDGES_TO: researcher
                 sample_prompt_genome,
                 constraints=constraints,
             )
+
+
+class TestDirectorServiceLLMProvider:
+    """Test that DirectorService exposes llm_provider property."""
+
+    def test_director_service_exposes_llm_provider(self):
+        """DirectorService exposes llm_provider property."""
+        mock_provider = MockLLMProvider("test")
+        director = DirectorService(llm_provider=mock_provider)
+        assert director.llm_provider is mock_provider
+
+    def test_director_service_llm_provider_is_readonly(self):
+        """DirectorService.llm_provider is a read-only property."""
+        mock_provider = MockLLMProvider("test")
+        director = DirectorService(llm_provider=mock_provider)
+        with pytest.raises(AttributeError):
+            director.llm_provider = MockLLMProvider("other")  # type: ignore[misc]

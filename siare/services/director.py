@@ -1956,6 +1956,9 @@ class DirectorService:
         """
         from siare.services.circuit_breaker import get_circuit_breaker_registry
 
+        # Store the LLM provider for external access
+        self._llm_provider = llm_provider
+
         # Initialize error handling
         self.retry_handler = retry_handler or RetryHandler()
         registry = circuit_breaker_registry or get_circuit_breaker_registry()
@@ -1985,6 +1988,11 @@ class DirectorService:
             retry_handler=self.retry_handler,
             circuit_breaker=architect_breaker,
         )
+
+    @property
+    def llm_provider(self) -> LLMProvider:
+        """The LLM provider used by this director."""
+        return self._llm_provider
 
     def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
         """Fire an evolution hook from sync context.
