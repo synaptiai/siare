@@ -70,6 +70,8 @@ class AgentSession:
         temperature: float = 0.5,
         max_messages: int = 50,
     ) -> None:
+        if max_messages < 2:
+            raise ValueError("max_messages must be >= 2 (system prompt + at least 1 message)")
         self.llm_provider = llm_provider
         self.model = model
         self.tools = tools or []
@@ -100,13 +102,12 @@ class AgentSession:
         return list(self._tool_calls_made)
 
     def _prune_messages(self) -> None:
-        """Keep system prompt + last max_messages messages."""
+        """Prune to max_messages total (system prompt + last N)."""
         if len(self._messages) <= self.max_messages:
             return
-        # Always keep the first message (system prompt)
         system_msg = self._messages[0]
-        # Keep the last (max_messages - 1) messages
-        self._messages = [system_msg] + self._messages[-(self.max_messages - 1):]
+        keep = self.max_messages - 1  # Reserve 1 slot for system prompt
+        self._messages = [system_msg] + self._messages[-keep:]
 
     def turn(self, user_message: str) -> str:
         """Execute one conversational turn.
