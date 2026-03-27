@@ -117,6 +117,15 @@ __all__ = [
     "TextGradConfig",
     "EvoPromptConfig",
     "MetaPromptConfig",
+    # Models - Agentic Variation (Hybrid Evolution)
+    "InnerLoopBudget",
+    "VariationResult",
+    "SupervisorDirective",
+    "SupervisorContext",
+    "AgenticVariationConfig",
+    "KnowledgeDocument",
+    "EvolutionRunSummary",
+    "VariationToolSpec",
 ]
 
 
@@ -1637,3 +1646,297 @@ class MetaPromptConfig(BaseModel):
         le=2.0,
         description="Temperature for improvement generation",
     )
+
+
+# ============================================================================
+# Agentic Variation Models (Hybrid Evolution)
+# ============================================================================
+
+
+class InnerLoopBudget(BaseModel):
+    """Budget for the inner agentic loop within a single variation step.
+
+    Tracks LLM calls, dry-run evaluations, and cost during one
+    AgenticDirector.vary() session. Prevents runaway inner loops.
+    """
+
+    maxLLMCalls: int = Field(
+        default=20,
+        ge=1,
+        description="Maximum LLM calls across all inner iterations",
+    )
+    maxDryRuns: int = Field(
+        default=3,
+        ge=0,
+        description="Maximum dry-run evaluations (expensive)",
+    )
+    maxCostUSD: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Cost ceiling in USD for the inner loop",
+    )
+    llmCallsUsed: int = Field(default=0, ge=0)
+    dryRunsUsed: int = Field(default=0, ge=0)
+    costUsed: float = Field(default=0.0, ge=0.0)
+
+    def exhausted(self) -> bool:
+        """Check if any budget dimension is exhausted."""
+        return (
+            self.llmCallsUsed >= self.maxLLMCalls
+            or self.dryRunsUsed >= self.maxDryRuns
+            or self.costUsed >= self.maxCostUSD
+        )
+
+    def record_llm_call(self, cost: float = 0.0) -> None:
+        """Record an LLM call and its cost."""
+        self.llmCallsUsed += 1
+        self.costUsed += cost
+
+    def record_dry_run(self, cost: float = 0.0) -> None:
+        """Record a dry-run evaluation and its cost."""
+        self.dryRunsUsed += 1
+        self.costUsed += cost
+
+    def usage_summary(self) -> dict[str, Any]:
+        """Return budget usage as a dict."""
+        return {
+            "llm_calls": f"{self.llmCallsUsed}/{self.maxLLMCalls}",
+            "dry_runs": f"{self.dryRunsUsed}/{self.maxDryRuns}",
+            "cost_usd": f"{self.costUsed:.4f}/{self.maxCostUSD:.2f}",
+        }
+
+
+class VariationToolSpec(BaseModel):
+    """Schema for a tool available to the agentic variation operator."""
+
+    name: str
+    description: str
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+class VariationResult(BaseModel):
+    """Result of an agentic variation session.
+
+    Returned by AgenticDirector.vary() — captures the best mutation
+    found within the inner iteration budget, or indicates failure.
+    """
+
+    mutation: SOPMutation | None = None
+    quality: float | None = Field(
+        default=None,
+        description="Dry-run quality score (None if not evaluated)",
+    )
+    iterationsUsed: int = Field(
+        default=0,
+        ge=0,
+        description="Number of inner loop iterations used",
+    )
+    innerBudgetUsed: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Inner loop budget consumption breakdown",
+    )
+    reason: str = Field(
+        default="improvement",
+        description="Outcome: improvement, no_improvement, budget_exhausted",
+    )
+
+    @property
+    def succeeded(self) -> bool:
+        """Whether the variation produced a usable mutation."""
+        return self.mutation is not None and self.reason == "improvement"
+
+
+class SupervisorDirective(BaseModel):
+    """Guidance from the supervisor agent to the AgenticDirector.
+
+    Produced when the supervisor detects stagnation and analyzes the
+    evolutionary trajectory to redirect exploration.
+    """
+
+    strategy: str = Field(
+        description="General approach (e.g., 'explore minimal topologies')",
+    )
+    focusArea: str = Field(
+        description="Part of SOP to modify: topology, prompts, parameters",
+    )
+    mutationTypes: list[MutationType] = Field(
+        description="Prioritized mutation types to try",
+    )
+    explorationTarget: str = Field(
+        description=(
+            "Specific target (e.g., 'low-complexity cells', "
+            "'high-latency Pareto gap')"
+        ),
+    )
+    rationale: str = Field(
+        description="Why this direction is promising",
+    )
+    overrideSelection: bool = Field(
+        default=False,
+        description="If True, override normal parent selection",
+    )
+    suggestedParents: list[dict[str, str]] | None = Field(
+        default=None,
+        description="Specific parents to use [{sopId, version}]",
+    )
+
+
+class SupervisorContext(BaseModel):
+    """Evidence gathered by the supervisor for trajectory analysis.
+
+    Assembled from GenePool and QDGridManager state before the
+    supervisor LLM call.
+    """
+
+    qdCoverage: dict[str, Any] = Field(
+        default_factory=dict,
+        description="QD grid visit statistics",
+    )
+    paretoFrontier: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Current Pareto optimal SOPs (summarized)",
+    )
+    recentGenes: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Genes from recent generations (summarized)",
+    )
+    diversityStats: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Population diversity statistics",
+    )
+    mutationSuccessRates: dict[str, float] = Field(
+        default_factory=dict,
+        description="Success rate per MutationType",
+    )
+    qualityHistory: list[float] = Field(
+        default_factory=list,
+        description="Best quality per generation",
+    )
+
+
+class AgenticVariationConfig(BaseModel):
+    """Configuration for the agentic variation system.
+
+    Controls whether the scheduler uses single-turn DirectorService,
+    full AgenticDirector, or adaptive mode that escalates on stagnation.
+    """
+
+    mode: Literal["single_turn", "agentic", "adaptive"] = Field(
+        default="adaptive",
+        description=(
+            "single_turn: current behavior; "
+            "agentic: always multi-turn; "
+            "adaptive: start single_turn, escalate on stagnation"
+        ),
+    )
+    maxInnerIterations: int = Field(
+        default=5,
+        ge=1,
+        description="Max diagnose-propose-dryrun cycles per variation",
+    )
+    improvementThreshold: float = Field(
+        default=0.02,
+        ge=0.0,
+        le=1.0,
+        description="Min quality improvement to accept a mutation",
+    )
+    innerBudget: InnerLoopBudget = Field(
+        default_factory=InnerLoopBudget,
+        description="Budget for each inner agentic loop",
+    )
+    sampleTasksPerVariation: int = Field(
+        default=2,
+        ge=0,
+        description="Tasks sampled for dry-run evaluation (0 = no dry-run)",
+    )
+    enableSupervisor: bool = Field(
+        default=True,
+        description="Enable supervisor agent on stagnation",
+    )
+    supervisorModel: str = Field(
+        default="gpt-5",
+        description="Model for the supervisor agent",
+    )
+    maxRedirectionsPerPhase: int = Field(
+        default=3,
+        ge=0,
+        description="Max supervisor redirections per evolution phase",
+    )
+    enableKnowledgeBase: bool = Field(
+        default=True,
+        description="Enable knowledge base for variation tools",
+    )
+    knowledgeDir: str | None = Field(
+        default=None,
+        description="Directory for user-provided knowledge documents",
+    )
+    persistRunSummaries: bool = Field(
+        default=True,
+        description="Save learnings from each evolution run",
+    )
+    enabledTools: list[str] = Field(
+        default_factory=lambda: [
+            "inspect_trace",
+            "compare_sops",
+            "query_gene_pool",
+            "dry_run",
+            "validate_mutation",
+            "query_knowledge_base",
+        ],
+        description="Tools available to the agentic variation operator",
+    )
+
+
+class KnowledgeDocument(BaseModel):
+    """A document in the knowledge base."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content: str
+    category: str = Field(
+        description=(
+            "Category: rag_patterns, prompt_engineering, "
+            "prior_runs, domain"
+        ),
+    )
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    relevanceScore: float | None = Field(
+        default=None,
+        description="Relevance score from retrieval (0.0 to 1.0)",
+    )
+
+
+class EvolutionRunSummary(BaseModel):
+    """Summary of a completed evolution run for knowledge persistence.
+
+    Recorded at job completion to inform future evolution runs.
+    """
+
+    jobId: str
+    domain: str
+    totalGenerations: int = Field(ge=0)
+    effectiveMutations: dict[str, int] = Field(
+        default_factory=dict,
+        description="Count of quality-improving mutations per type",
+    )
+    breakthroughs: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Largest quality jumps with context",
+    )
+    deadEnds: list[str] = Field(
+        default_factory=list,
+        description="Strategies that consistently failed",
+    )
+    finalParetoSize: int = Field(
+        default=0,
+        ge=0,
+        description="Number of Pareto-optimal SOPs at completion",
+    )
+    bestQuality: float = Field(
+        default=0.0,
+        description="Best quality score achieved",
+    )
+    qualityHistory: list[float] = Field(
+        default_factory=list,
+        description="Best quality per generation for trend analysis",
+    )
+    completedAt: str = Field(default_factory=_utc_now_iso)
