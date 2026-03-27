@@ -1446,9 +1446,85 @@ class ValidationEnforcer:
 
 ---
 
-## 11. Future Extensions
+## 11. Agentic Variation Models
 
-### 11.1 Advanced RBAC Features 🔒
+Models supporting the hybrid agentic evolution architecture (added in PR #2).
+
+### 11.1 AgenticVariationConfig
+
+Controls whether the scheduler uses single-turn, agentic, or adaptive variation.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `mode` | `"single_turn" \| "agentic" \| "adaptive"` | `"adaptive"` | Variation mode |
+| `maxInnerIterations` | `int` (≥1) | `5` | Max diagnose-propose-validate cycles per variation |
+| `innerBudget` | `InnerLoopBudget` | see below | Budget for each inner agentic loop |
+| `sampleTasksPerVariation` | `int` (≥0) | `2` | Tasks for dry-run evaluation (0 = no dry-run) |
+| `enableSupervisor` | `bool` | `true` | Enable supervisor on stagnation |
+| `agentModel` | `str` | `"gpt-5"` | LLM model for director and supervisor |
+| `maxRedirectionsPerPhase` | `int` (≥0) | `3` | Max supervisor redirections per phase |
+| `enableKnowledgeBase` | `bool` | `true` | Enable knowledge base |
+| `knowledgeDir` | `str \| null` | `null` | Directory for user-provided knowledge |
+| `persistRunSummaries` | `bool` | `true` | Save learnings from each run |
+| `enabledTools` | `list[str]` | all 6 tools | Tools available to the agent |
+
+### 11.2 InnerLoopBudget
+
+Budget tracking for a single `AgenticDirector.vary()` session.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `maxLLMCalls` | `int` (≥1) | `20` | Max LLM calls across all iterations |
+| `maxDryRuns` | `int` (≥0) | `3` | Max dry-run evaluations (0 = skip check) |
+| `maxCostUSD` | `float` (≥0) | `1.0` | Cost ceiling in USD |
+| `llmCallsUsed` | `int` | `0` | Tracking counter |
+| `dryRunsUsed` | `int` | `0` | Tracking counter |
+| `costUsed` | `float` | `0.0` | Tracking counter |
+
+Methods: `exhausted()`, `record_llm_call(cost)`, `record_dry_run(cost)`, `usage_summary()`.
+
+### 11.3 VariationResult
+
+Result of an `AgenticDirector.vary()` session.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `mutation` | `SOPMutation \| null` | Best mutation found (null if none) |
+| `quality` | `float \| null` | Dry-run quality score |
+| `iterationsUsed` | `int` | Inner loop iterations consumed |
+| `innerBudgetUsed` | `dict` | Budget consumption breakdown |
+| `reason` | `str` | `"improvement"`, `"no_improvement"`, or `"budget_exhausted"` |
+
+Property: `succeeded` — True when mutation is not None and reason is "improvement".
+
+### 11.4 SupervisorDirective
+
+Guidance from the supervisor agent after stagnation detection.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `strategy` | `str` | General approach (e.g., "explore minimal topologies") |
+| `focusArea` | `str` | `"topology"`, `"prompts"`, or `"parameters"` |
+| `mutationTypes` | `list[MutationType]` | Prioritized mutation types |
+| `explorationTarget` | `str` | Specific QD grid region or Pareto gap |
+| `rationale` | `str` | Why this direction is promising |
+| `overrideSelection` | `bool` | Override normal parent selection |
+| `suggestedParents` | `list[{sopId, version}] \| null` | Specific parents to use |
+
+### 11.5 Supporting Models
+
+| Model | Purpose |
+|-------|---------|
+| `SupervisorContext` | Evidence gathered for supervisor analysis (QD coverage, Pareto frontier, recent genes) |
+| `KnowledgeDocument` | Document in the knowledge base (content, category, relevance score) |
+| `EvolutionRunSummary` | Summary of completed evolution run (effective mutations, breakthroughs, dead ends) |
+| `VariationToolSpec` | Schema for a tool available to the agent (name, description, parameters) |
+
+---
+
+## 12. Future Extensions
+
+### 12.1 Advanced RBAC Features 🔒
 
 > Available in siare-cloud enterprise edition.
 
@@ -1457,7 +1533,7 @@ class ValidationEnforcer:
 - **Delegation**: Users can delegate permissions to others
 - **Audit logging**: Track all authorization decisions
 
-### 11.2 Domain Package Management
+### 12.2 Domain Package Management
 
 - **Package registry**: Central registry for domain packages
 - **Version resolution**: Automatic resolution of dependency versions

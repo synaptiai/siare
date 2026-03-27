@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 
 from siare.core.models import EvolutionRunSummary, KnowledgeDocument
@@ -86,7 +87,7 @@ class KnowledgeBase:
             List of relevant documents sorted by relevance.
         """
         query_lower = query.lower()
-        query_terms = set(query_lower.split())
+        query_terms = self._strip_punctuation(set(query_lower.split()))
 
         candidates: list[KnowledgeDocument] = []
         categories = (
@@ -107,6 +108,11 @@ class KnowledgeBase:
         )
         return candidates[:top_k]
 
+    @staticmethod
+    def _strip_punctuation(terms: set[str]) -> set[str]:
+        """Strip leading/trailing punctuation from terms."""
+        return {re.sub(r"^[^\w]+|[^\w]+$", "", t) for t in terms} - {""}
+
     def _score_document(
         self,
         doc: KnowledgeDocument,
@@ -114,7 +120,7 @@ class KnowledgeBase:
     ) -> float:
         """Score a document against query terms (simple keyword match)."""
         content_lower = doc.content.lower()
-        content_terms = set(content_lower.split())
+        content_terms = self._strip_punctuation(set(content_lower.split()))
         matching = query_terms & content_terms
         if not matching:
             return 0.0

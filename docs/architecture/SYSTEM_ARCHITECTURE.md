@@ -109,6 +109,44 @@ Orchestrates the evolution loop:
 - Selects parents using configurable strategies
 - Coordinates execution → evaluation → mutation cycle
 - Tracks budget and convergence
+- Supports 3 variation modes: single_turn, agentic, adaptive
+
+### 2.8 Agentic Director
+
+Multi-turn variation operator (drop-in alternative to Director Service):
+- Iterative diagnose → propose → validate loop with budget control
+- Tool-augmented: 6 tools (inspect_trace, compare_sops, query_gene_pool, dry_run, validate_mutation, query_knowledge_base)
+- Accepts `SupervisorDirective` to guide exploration after stagnation
+- Fires `AgenticEvolutionHooks` for observability
+- Configured via `AgenticVariationConfig`
+
+### 2.9 Supervisor Agent
+
+Analyzes evolutionary trajectory when stagnation is detected:
+- Gathers evidence from GenePool (Pareto frontier, diversity stats) and QDGrid (visit stats, coverage)
+- LLM-driven analysis produces `SupervisorDirective` with strategy, focus area, and target
+- Fallback directive when LLM is unavailable (explore unvisited QD cells)
+- Cooldown mechanism prevents rapid successive calls
+
+### 2.10 Knowledge Base
+
+Queryable store of domain knowledge for the variation agent:
+- 4 categories: rag_patterns, prompt_engineering, prior_runs, domain
+- Built-in knowledge: curated RAG and prompt engineering best practices
+- Records `EvolutionRunSummary` at job completion for future runs
+- File-based loading from JSON/TXT documents
+
+### 2.11 Variation Tool Registry
+
+6 tools available to the agentic director during variation sessions:
+- `inspect_trace`: Deep-dive into execution trace details
+- `compare_sops`: Diff two SOP configurations
+- `query_gene_pool`: Query population for patterns (Pareto, top performers, diversity)
+- `dry_run`: Execute candidate SOP on sample task (budget-limited)
+- `validate_mutation`: Pre-validate against constraints without execution
+- `query_knowledge_base`: Query domain knowledge
+
+Implements `ToolExecutor` protocol for plug-and-play with `AgentSession`.
 
 ---
 
@@ -183,6 +221,29 @@ phases = [
   }
 ]
 ```
+
+### 3.5 Hybrid Agentic Evolution
+
+The scheduler supports three variation modes via `AgenticVariationConfig`:
+
+| Mode | Behavior | Cost | Use Case |
+|------|----------|------|----------|
+| `single_turn` | Classic Diagnostician + Architect (2 LLM calls) | Low | Default, fast iterations |
+| `agentic` | Multi-turn AgenticDirector with tools | Higher | Deep optimization |
+| `adaptive` | Starts single_turn, escalates on stagnation | Variable | **Recommended** — best of both |
+
+**Adaptive mode flow:**
+1. Evolution starts with cheap single-turn mutations
+2. Supervisor detects stagnation (no quality improvement over convergence window)
+3. Supervisor analyzes trajectory and issues `SupervisorDirective`
+4. Scheduler switches to agentic mode with directive guidance
+5. Cooldown prevents rapid supervisor calls (waits convergence_window generations)
+6. Phase transitions reset agentic state
+
+**Inner loop budget** (`InnerLoopBudget`):
+- `maxLLMCalls`: Total LLM calls across all inner iterations (default: 20)
+- `maxDryRuns`: Dry-run evaluations (default: 3)
+- `maxCostUSD`: Cost ceiling per variation session (default: $1.00)
 
 ---
 

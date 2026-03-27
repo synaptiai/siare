@@ -78,6 +78,14 @@ Unlike prompt-only optimizers, SIARE can evolve the **structure** of your pipeli
 ### 🎯 Quality-Diversity Optimization
 Using MAP-Elites, SIARE maintains a diverse population of high-performing solutions. You don't just get one answer - you get a range of options trading off different metrics.
 
+### 🤖 Hybrid Agentic Evolution
+Three evolution modes to match your needs:
+- **Single-turn**: Fast, cheap mutations via Diagnostician + Architect (default)
+- **Agentic**: Multi-turn variation with tool access — the agent diagnoses, proposes, validates, and iterates
+- **Adaptive**: Starts single-turn, automatically escalates to agentic when stagnation is detected
+
+When evolution stalls, a **SupervisorAgent** analyzes the trajectory and redirects exploration toward unexplored territory.
+
 ### 🔌 Extensible Hooks
 Enterprise features integrate cleanly via hooks without modifying core code:
 - Audit logging
@@ -163,6 +171,8 @@ best = gene_pool.get_pareto_frontier()[0]
 | Parameter tuning | ✅ | ❌ | ✅ | ❌ |
 | **Topology evolution** | ✅ | ❌ | ❌ | ❌ |
 | **Quality-Diversity** | ✅ | ❌ | ❌ | ❌ |
+| **Agentic variation** | ✅ | ❌ | ❌ | ❌ |
+| **Self-supervision** | ✅ | ❌ | ❌ | ❌ |
 | Multi-agent support | ✅ | Limited | ❌ | ✅ |
 | Extensible hooks | ✅ | ❌ | ❌ | ✅ |
 

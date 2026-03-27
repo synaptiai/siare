@@ -106,7 +106,7 @@ class AgenticDirector:
         self.llm_provider = llm_provider
         self.config = config or AgenticVariationConfig()
         self.tool_registry = tool_registry or VariationToolRegistry()
-        self.model = model or self.config.supervisorModel
+        self.model = model or self.config.agentModel
         self.retry_handler = retry_handler or RetryHandler()
         self.circuit_breaker = circuit_breaker or CircuitBreaker(
             name="agentic_director_llm",
@@ -369,6 +369,8 @@ class AgenticDirector:
             elif stripped.startswith("RATIONALE:"):
                 rationale = stripped.split(":", 1)[1].strip()
                 current_section = "rationale"
+            elif current_section == "changes" and stripped:
+                changes += " " + stripped
             elif current_section == "new_content" and stripped:
                 new_content += "\n" + stripped
             elif current_section == "rationale" and stripped:

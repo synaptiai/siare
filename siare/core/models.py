@@ -1847,9 +1847,9 @@ class AgenticVariationConfig(BaseModel):
         default=True,
         description="Enable supervisor agent on stagnation",
     )
-    supervisorModel: str = Field(
+    agentModel: str = Field(
         default="gpt-5",
-        description="Model for the supervisor agent",
+        description="LLM model for the agentic director and supervisor",
     )
     maxRedirectionsPerPhase: int = Field(
         default=3,

@@ -24,6 +24,9 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+MAX_TOOL_OUTPUT_CHARS = 4000
+
+
 class VariationTool(ABC):
     """Base class for tools available during agentic variation."""
 
@@ -559,7 +562,10 @@ class VariationToolRegistry(ToolExecutor):
         tool = self._tools.get(tool_name)
         if tool is None:
             return f"Unknown tool: {tool_name}. Available: {list(self._tools.keys())}"
-        return tool.execute(arguments)
+        result = tool.execute(arguments)
+        if len(result) > MAX_TOOL_OUTPUT_CHARS:
+            return result[:MAX_TOOL_OUTPUT_CHARS] + "\n... (truncated)"
+        return result
 
     def set_traces(self, traces: dict[str, Any]) -> None:
         """Update trace data for InspectTraceTool."""

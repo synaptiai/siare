@@ -933,7 +933,7 @@ class EvolutionScheduler:
                         llm_provider=llm_provider,
                         gene_pool=self.gene_pool,
                         qd_grid=self.qd_grid,
-                        model=config.supervisorModel,
+                        model=config.agentModel,
                     )
 
                 if config.mode == "agentic":
