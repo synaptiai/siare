@@ -159,6 +159,52 @@ Fault tolerance mechanism that prevents repeated failures from overwhelming the 
 
 ---
 
+## Agentic Evolution
+
+### Agentic Director
+Multi-turn variation operator that replaces the single-turn Diagnostician + Architect with an iterative diagnose-propose-validate loop. Has access to 6 tools for inspection, comparison, and validation.
+
+**Code:** `AgenticDirector`
+
+### Supervisor Agent
+Monitors the evolutionary trajectory for stagnation and redirects exploration toward unexplored or promising territory when quality plateaus.
+
+**Code:** `SupervisorAgent`
+
+### Knowledge Base
+Queryable store of domain knowledge, RAG patterns, prompt engineering techniques, and learnings from prior evolution runs. Consulted by the AgenticDirector during variation.
+
+**Code:** `KnowledgeBase`
+
+### Variation Mode
+Controls how the evolution loop generates mutations. Three modes:
+- **single_turn**: Classic 2-call pattern (Diagnostician + Architect)
+- **agentic**: Multi-turn AgenticDirector with tool access
+- **adaptive**: Starts single_turn, escalates to agentic on stagnation
+
+**Code:** `AgenticVariationConfig.mode`
+
+### Inner Loop Budget
+Budget tracking for a single AgenticDirector variation session. Limits LLM calls, dry-run evaluations, and cost per mutation attempt.
+
+**Code:** `InnerLoopBudget`
+
+---
+
+## Benchmarks
+
+### Self-Improvement Benchmark
+Core benchmark demonstrating SIARE's value: compares Gen 0 (initial) vs Gen N (evolved) on the same model to isolate evolution's contribution.
+
+**Code:** `SelfImprovementBenchmark`
+
+### Agentic Comparison Benchmark
+Runs the self-improvement benchmark in all 3 variation modes on the same dataset for side-by-side comparison.
+
+**Script:** `run_agentic_comparison.py`
+
+---
+
 ## Terminology Mapping
 
 | User-Facing Term | Code Term | Description |

@@ -320,6 +320,69 @@ prompt_evolution:
 
 ---
 
+## Agentic Evolution
+
+Configure the hybrid agentic variation system. When enabled, the evolution loop can use multi-turn, tool-augmented mutations instead of (or in addition to) single-turn mutations.
+
+```yaml
+agentic_evolution:
+  mode: "adaptive"           # single_turn | agentic | adaptive
+  max_inner_iterations: 5    # Max diagnose-propose-validate cycles
+  agent_model: "gpt-4o"     # LLM for AgenticDirector and Supervisor
+  enable_supervisor: true    # Activate supervisor on stagnation
+  max_redirections_per_phase: 3  # Max supervisor interventions per phase
+  enable_knowledge_base: true    # Domain knowledge for variation tools
+  knowledge_dir: null            # Custom knowledge documents directory
+  persist_run_summaries: true    # Save learnings for future runs
+  sample_tasks_per_variation: 2  # Tasks for dry-run evaluation (0 = skip)
+  inner_budget:
+    max_llm_calls: 20       # Per variation session
+    max_dry_runs: 3
+    max_cost_usd: 1.0
+  enabled_tools:             # Tools available to the agent
+    - inspect_trace
+    - compare_sops
+    - query_gene_pool
+    - dry_run
+    - validate_mutation
+    - query_knowledge_base
+```
+
+### Programmatic
+
+```python
+from siare.core.models import AgenticVariationConfig, InnerLoopBudget
+
+config = AgenticVariationConfig(
+    mode="adaptive",
+    maxInnerIterations=5,
+    agentModel="gpt-4o",
+    innerBudget=InnerLoopBudget(maxLLMCalls=20, maxDryRuns=3),
+)
+```
+
+### Modes Explained
+
+| Mode | Behavior | When to Use |
+|------|----------|-------------|
+| `single_turn` | Default 2-call pattern (Diagnostician + Architect) | Fast iterations, budget-constrained |
+| `agentic` | Always multi-turn with tools | When maximizing quality is priority |
+| `adaptive` | Starts single_turn, escalates on stagnation | **Recommended** — best cost/quality tradeoff |
+
+### Settings Reference
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `mode` | string | `"adaptive"` | Variation strategy |
+| `max_inner_iterations` | int | `5` | Max cycles per variation |
+| `agent_model` | string | `"gpt-5"` | LLM for agent and supervisor |
+| `enable_supervisor` | bool | `true` | Stagnation detection and redirection |
+| `max_redirections_per_phase` | int | `3` | Prevents excessive supervisor calls |
+| `enable_knowledge_base` | bool | `true` | Domain knowledge access |
+| `sample_tasks_per_variation` | int | `2` | Dry-run tasks (0 = skip) |
+
+---
+
 ## Storage
 
 ```yaml

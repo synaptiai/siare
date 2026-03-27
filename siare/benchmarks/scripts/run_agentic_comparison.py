@@ -283,9 +283,13 @@ Examples:
     # Create LLM provider (shared across all mode runs)
     logger.info(f"Initializing {args.provider} LLM provider...")
     if args.provider == "ollama":
-        llm_provider = LLMProviderFactory.create(
-            "ollama", model=args.model,
-        )
+        try:
+            from siare.providers.ollama_provider import OllamaProvider
+            llm_provider = OllamaProvider(model=args.model)
+        except ImportError:
+            llm_provider = LLMProviderFactory.create(
+                "ollama", model=args.model,
+            )
     elif args.provider == "openai":
         llm_provider = LLMProviderFactory.create("openai")
     elif args.provider == "anthropic":
