@@ -78,3 +78,5 @@ example_docs/
 TODO.md
 .claude/worktrees/
 docs/plans/
+datasets/
+benchmarks/results/
