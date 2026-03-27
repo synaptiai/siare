@@ -395,6 +395,161 @@ class TestAgentSessionResilience:
         assert "Continuing" in result
 
 
+# ============================================================================
+# Message Pruning Tests
+# ============================================================================
+
+
+class TestAgentSessionMessagePruning:
+    """Tests for sliding window message history pruning."""
+
+    def test_default_max_messages(self):
+        """Default max_messages is 50."""
+        provider = MockLLMProvider(["OK"])
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+        )
+        assert session.max_messages == 50
+
+    def test_custom_max_messages(self):
+        """Create session with custom max_messages and verify it's respected."""
+        provider = MockLLMProvider(["OK"] * 20)
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+            max_messages=10,
+        )
+        assert session.max_messages == 10
+
+        # Send enough turns to exceed max_messages=10
+        # Each turn adds 2 messages (user + assistant), starting with 1 (system)
+        for i in range(8):
+            session.turn(f"Message {i}")
+
+        # 1 system + 16 user/assistant = 17 messages total before pruning
+        # But pruning happens at the start of each turn, so it gets trimmed
+        # After final pruning: system + 9 most recent = 10
+        assert len(session.messages) <= 10 + 2  # max_messages + last turn pair
+
+    def test_messages_pruned_when_exceeding_max(self):
+        """Set max_messages=5, send enough turns to exceed, verify pruning."""
+        provider = MockLLMProvider(["OK"] * 20)
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="System prompt here",
+            max_messages=5,
+        )
+
+        # Do 4 turns: each adds user + assistant = 8 msgs + 1 system = 9 total
+        for i in range(4):
+            session.turn(f"Turn {i}")
+
+        # After 4th turn, _prune_messages ran at start of turn 4:
+        # Before prune on turn 4: 1 system + 6 (3 turns * 2) + 1 user = 8
+        #   -> pruned to 5: system + last 4
+        # Then turn 4 adds user + assistant = 7
+        # The key invariant: messages never grow unbounded
+        messages = session.messages
+        # System prompt is always first
+        assert messages[0].role == "system"
+        assert messages[0].content == "System prompt here"
+        # Total messages bounded: max_messages + 2 (the turn that just happened)
+        assert len(messages) <= 5 + 2
+
+    def test_system_prompt_always_preserved(self):
+        """After pruning, first message is always the system prompt."""
+        provider = MockLLMProvider(["OK"] * 50)
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="I am the system prompt",
+            max_messages=3,
+        )
+
+        # Do many turns to trigger pruning multiple times
+        for i in range(10):
+            session.turn(f"Turn {i}")
+
+        messages = session.messages
+        assert messages[0].role == "system"
+        assert messages[0].content == "I am the system prompt"
+
+    def test_no_pruning_when_under_limit(self):
+        """Messages are not pruned when count is within max_messages."""
+        provider = MockLLMProvider(["OK", "OK"])
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+            max_messages=50,
+        )
+
+        session.turn("Hello")
+        session.turn("World")
+        # 1 system + 2 user + 2 assistant = 5, well under 50
+        assert len(session.messages) == 5
+
+    def test_pruning_preserves_most_recent_messages(self):
+        """After pruning, the most recent messages are preserved."""
+        provider = MockLLMProvider(["OK"] * 20)
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="System",
+            max_messages=5,
+        )
+
+        # Do several turns
+        for i in range(6):
+            session.turn(f"Turn {i}")
+
+        messages = session.messages
+        # The last assistant message should be from the most recent turn
+        last_assistant = [m for m in messages if m.role == "assistant"][-1]
+        assert last_assistant.content == "OK"
+        # The last user message content should be the most recent turn input
+        user_msgs = [m for m in messages if m.role == "user"]
+        assert user_msgs[-1].content == "Turn 5"
+
+
+class TestAgentSessionMessageValidation:
+    """Tests for max_messages validation."""
+
+    def test_max_messages_below_2_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=1,
+            )
+
+    def test_max_messages_zero_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=0,
+            )
+
+    def test_max_messages_negative_raises(self):
+        provider = MockLLMProvider(["OK"])
+        with pytest.raises(ValueError, match="max_messages must be >= 2"):
+            AgentSession(
+                llm_provider=provider,
+                model="test-model",
+                system_prompt="Test",
+                max_messages=-5,
+            )
+
+
 class TestAgentSessionContextInjection:
     """Tests for mid-session context injection."""
 

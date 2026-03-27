@@ -68,7 +68,10 @@ class AgentSession:
         circuit_breaker: CircuitBreaker | None = None,
         max_tool_rounds: int = 5,
         temperature: float = 0.5,
+        max_messages: int = 50,
     ) -> None:
+        if max_messages < 2:
+            raise ValueError("max_messages must be >= 2 (system prompt + at least 1 message)")
         self.llm_provider = llm_provider
         self.model = model
         self.tools = tools or []
@@ -81,6 +84,7 @@ class AgentSession:
         )
         self.max_tool_rounds = max_tool_rounds
         self.temperature = temperature
+        self._max_messages = max_messages
 
         self._messages: list[LLMMessage] = [
             LLMMessage(role="system", content=system_prompt),
@@ -96,6 +100,19 @@ class AgentSession:
     def tool_calls_made(self) -> list[dict[str, Any]]:
         """Record of all tool calls made in this session."""
         return list(self._tool_calls_made)
+
+    @property
+    def max_messages(self) -> int:
+        """Maximum messages to retain (system prompt + last N)."""
+        return self._max_messages
+
+    def _prune_messages(self) -> None:
+        """Prune to max_messages total (system prompt + last N)."""
+        if len(self._messages) <= self._max_messages:
+            return
+        system_msg = self._messages[0]
+        keep = self.max_messages - 1  # Reserve 1 slot for system prompt
+        self._messages = [system_msg, *self._messages[-keep:]]
 
     def turn(self, user_message: str) -> str:
         """Execute one conversational turn.
@@ -113,6 +130,7 @@ class AgentSession:
         Raises:
             RuntimeError: If the circuit breaker is open or retries exhausted.
         """
+        self._prune_messages()
         self._messages.append(LLMMessage(role="user", content=user_message))
 
         for _round in range(self.max_tool_rounds):
@@ -135,6 +153,7 @@ class AgentSession:
                 LLMMessage(role="user", content=results_text)
             )
 
+        self._prune_messages()
         return self._last_assistant_content()
 
     def _call_llm(self) -> LLMResponse:

@@ -18,7 +18,12 @@ logger = logging.getLogger(__name__)
 
 from siare.core.config import ConvergenceConfig
 from siare.core.constants import MIN_PARENTS_FOR_CROSSOVER
-from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
+from siare.core.hooks import (
+    HookContext,
+    HookRegistry,
+    fire_evolution_hook,
+    make_task_done_callback,
+)
 from siare.core.models import (
     AgenticVariationConfig,
     AggregatedMetric,
@@ -176,7 +181,12 @@ class EvolutionScheduler:
             try:
                 loop = asyncio.get_running_loop()
                 # We're in an async context - create task but don't await
-                loop.create_task(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+                task = loop.create_task(
+                    fire_evolution_hook(hook_name, ctx, *args, **kwargs)
+                )
+                task.add_done_callback(
+                    make_task_done_callback(hook_name)
+                )
                 return None
             except RuntimeError:
                 # No running loop - create new one for sync context
@@ -914,41 +924,30 @@ class EvolutionScheduler:
                 enabled_tools=config.enabledTools,
             )
 
-            llm_provider = getattr(self.director_service, "llm_provider", None)
-            if llm_provider is None:
-                llm_provider = getattr(
-                    getattr(self.director_service, "diagnostician", None),
-                    "llm_provider", None,
-                )
+            llm_provider = self.director_service.llm_provider
 
-            if llm_provider:
-                self._agentic_director = AgenticDirector(
+            self._agentic_director = AgenticDirector(
+                llm_provider=llm_provider,
+                config=config,
+                tool_registry=registry,
+            )
+
+            if config.enableSupervisor:
+                self._supervisor = SupervisorAgent(
                     llm_provider=llm_provider,
-                    config=config,
-                    tool_registry=registry,
+                    gene_pool=self.gene_pool,
+                    qd_grid=self.qd_grid,
+                    model=config.agentModel,
                 )
 
-                if config.enableSupervisor:
-                    self._supervisor = SupervisorAgent(
-                        llm_provider=llm_provider,
-                        gene_pool=self.gene_pool,
-                        qd_grid=self.qd_grid,
-                        model=config.agentModel,
-                    )
+            if config.mode == "agentic":
+                self._using_agentic_mode = True
 
-                if config.mode == "agentic":
-                    self._using_agentic_mode = True
-
-                logger.info(
-                    "Agentic evolution initialized (mode=%s, supervisor=%s)",
-                    config.mode, config.enableSupervisor,
-                )
-            else:
-                logger.warning(
-                    "Could not extract LLM provider from DirectorService; "
-                    "agentic evolution disabled"
-                )
-        except ImportError as e:
+            logger.info(
+                "Agentic evolution initialized (mode=%s, supervisor=%s)",
+                config.mode, config.enableSupervisor,
+            )
+        except (ImportError, AttributeError) as e:
             logger.warning("Agentic evolution components not available: %s", e)
 
     def _should_use_agentic(self) -> bool:

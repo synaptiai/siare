@@ -12,7 +12,12 @@ if TYPE_CHECKING:
     from siare.services.execution_engine import ExecutionTrace
     from siare.services.prompt_evolution.orchestrator import PromptEvolutionOrchestrator
 
-from siare.core.hooks import HookContext, HookRegistry, fire_evolution_hook
+from siare.core.hooks import (
+    HookContext,
+    HookRegistry,
+    fire_evolution_hook,
+    make_task_done_callback,
+)
 from siare.core.models import (
     Diagnosis,
     EvaluationVector,
@@ -1956,6 +1961,9 @@ class DirectorService:
         """
         from siare.services.circuit_breaker import get_circuit_breaker_registry
 
+        # Store the LLM provider for external access
+        self._llm_provider = llm_provider
+
         # Initialize error handling
         self.retry_handler = retry_handler or RetryHandler()
         registry = circuit_breaker_registry or get_circuit_breaker_registry()
@@ -1986,6 +1994,11 @@ class DirectorService:
             circuit_breaker=architect_breaker,
         )
 
+    @property
+    def llm_provider(self) -> LLMProvider:
+        """The LLM provider used by this director."""
+        return self._llm_provider
+
     def _fire_hook(self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any) -> Any:
         """Fire an evolution hook from sync context.
 
@@ -2009,14 +2022,18 @@ class DirectorService:
             # Try to get existing event loop (may be running in async context)
             try:
                 loop = asyncio.get_running_loop()
-                # We're in an async context - create task but don't await
-                loop.create_task(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+                task = loop.create_task(
+                    fire_evolution_hook(hook_name, ctx, *args, **kwargs)
+                )
+                task.add_done_callback(
+                    make_task_done_callback(hook_name)
+                )
                 return None
             except RuntimeError:
                 # No running loop - create new one for sync context
                 return asyncio.run(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
         except Exception as e:
-            logger.warning(f"Failed to fire hook {hook_name}: {e}")
+            logger.warning("Failed to fire hook %s: %s", hook_name, e)
             return None
 
     def propose_improvements(
