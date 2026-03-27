@@ -65,6 +65,8 @@ class EvolutionBenchmarkConfig:
     # Budget constraints
     max_cost: float | None = None
     max_evaluations: int | None = None
+    # Agentic variation config (None = single_turn default behavior)
+    agentic_config: Any | None = None  # AgenticVariationConfig when set
 
 
 @dataclass
@@ -271,6 +273,7 @@ class EvolutionBenchmarkRunner:
             execution_engine=self._execution_engine,
             evaluation_service=self._evaluation_service,
             director_service=self._director_service,
+            agentic_config=self._config.agentic_config,
         )
 
     def _create_evolution_job(

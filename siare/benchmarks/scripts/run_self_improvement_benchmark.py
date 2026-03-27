@@ -237,6 +237,27 @@ Examples:
         help="Roles that cannot be removed (default: query_decomposer synthesizer)",
     )
 
+    # Agentic variation options
+    parser.add_argument(
+        "--variation-mode",
+        type=str,
+        choices=["single_turn", "agentic", "adaptive"],
+        default=None,
+        help="Variation mode: single_turn (default), agentic (multi-turn), adaptive (escalate on stagnation)",
+    )
+    parser.add_argument(
+        "--max-inner-iterations",
+        type=int,
+        default=5,
+        help="Max inner loop iterations per agentic variation (default: 5)",
+    )
+    parser.add_argument(
+        "--agent-model",
+        type=str,
+        default=None,
+        help="LLM model for agentic director/supervisor (default: same as --reasoning-model)",
+    )
+
     # Other options
     parser.add_argument(
         "--verbose", "-v",
@@ -309,6 +330,16 @@ Examples:
         logger.exception("Failed to import required modules")
         return 1
 
+    # Build agentic variation config if mode specified
+    agentic_config = None
+    if args.variation_mode:
+        from siare.core.models import AgenticVariationConfig
+        agentic_config = AgenticVariationConfig(
+            mode=args.variation_mode,
+            maxInnerIterations=args.max_inner_iterations,
+            agentModel=args.agent_model or args.reasoning_model,
+        )
+
     # Configure
     if args.quick:
         config = SelfImprovementConfig(
@@ -334,6 +365,8 @@ Examples:
             enable_topology_evolution=args.enable_topology_evolution,
             max_roles=args.max_roles,
             mandatory_roles=args.mandatory_roles,
+            # Agentic variation
+            agentic_config=agentic_config,
         )
     else:
         config = SelfImprovementConfig(
@@ -358,6 +391,8 @@ Examples:
             enable_topology_evolution=args.enable_topology_evolution,
             max_roles=args.max_roles,
             mandatory_roles=args.mandatory_roles,
+            # Agentic variation
+            agentic_config=agentic_config,
         )
 
     # Create provider and SOP
@@ -410,6 +445,12 @@ Examples:
         logger.info(f"  Mandatory Roles: {config.mandatory_roles}")
     else:
         logger.info("Topology Evolution: disabled (prompt-only)")
+    if config.agentic_config:
+        logger.info(f"Variation Mode: {config.agentic_config.mode}")
+        logger.info(f"  Max Inner Iterations: {config.agentic_config.maxInnerIterations}")
+        logger.info(f"  Agent Model: {config.agentic_config.agentModel}")
+    else:
+        logger.info("Variation Mode: single_turn (default)")
     logger.info("=" * 60)
 
     try:

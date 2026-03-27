@@ -157,11 +157,16 @@ class SelfImprovementReport:
         r = self._result
         timestamp = datetime.now(timezone.utc).isoformat()
 
+        mode_str = "single_turn (default)"
+        if r.config.agentic_config:
+            mode_str = getattr(r.config.agentic_config, "mode", "unknown")
+
         return f"""## Metadata
 
 - **Dataset:** {r.dataset_name}
 - **Model:** {r.config.model}
 - **Reasoning Model:** {r.config.reasoning_model}
+- **Variation Mode:** {mode_str}
 - **Date:** {timestamp}
 - **Generations:** {r.generations_run}
 - **Samples:** {r.config.max_samples}
@@ -342,7 +347,7 @@ All comparisons use Wilcoxon signed-rank test (paired samples on same queries).
         r = self._result
         c = r.config
 
-        return f"""## Configuration
+        lines = f"""## Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -354,6 +359,16 @@ All comparisons use Wilcoxon signed-rank test (paired samples on same queries).
 | Max Samples | {c.max_samples} |
 | Prompt Strategy | {c.prompt_strategy} |
 | Metrics | {', '.join(c.metrics_to_optimize)} |"""
+
+        if c.agentic_config:
+            ac = c.agentic_config
+            lines += f"""
+| Variation Mode | {getattr(ac, 'mode', 'unknown')} |
+| Max Inner Iterations | {getattr(ac, 'maxInnerIterations', 'N/A')} |
+| Agent Model | {getattr(ac, 'agentModel', 'N/A')} |
+| Supervisor Enabled | {getattr(ac, 'enableSupervisor', 'N/A')} |"""
+
+        return lines
 
     def _footer_section(self) -> str:
         """Generate footer section."""
