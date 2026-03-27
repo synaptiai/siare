@@ -79,6 +79,10 @@ class TestInnerLoopBudget:
         with pytest.raises(ValueError):
             InnerLoopBudget(maxLLMCalls=0)
 
+    def test_zero_dry_runs_not_immediately_exhausted(self):
+        budget = InnerLoopBudget(maxDryRuns=0)
+        assert not budget.exhausted()  # 0 dry runs allowed = skip dry-run check
+
     def test_custom_budget(self):
         budget = InnerLoopBudget(
             maxLLMCalls=50,

@@ -197,7 +197,8 @@ class AgentSession:
             name = call.get("name", "unknown")
             arguments = call.get("arguments", {})
             try:
-                assert self.tool_executor is not None
+                if self.tool_executor is None:
+                    raise RuntimeError("tool_executor is required")
                 result = self.tool_executor.execute(name, arguments)
                 self._tool_calls_made.append({
                     "name": name,
@@ -245,12 +246,12 @@ class AgentSession:
             for t in self.tools
         ]
 
-    def inject_system_context(self, context: str) -> None:
-        """Append context to the conversation as a system-level note.
+    def inject_context(self, context: str) -> None:
+        """Inject additional context into the conversation.
 
-        Used to inject supervisor directives or updated constraints
-        mid-session without disrupting the conversation flow.
+        Sent as a user message with a [Context] prefix. Used to inject
+        supervisor directives or updated constraints mid-session.
         """
         self._messages.append(
-            LLMMessage(role="user", content=f"[System context]: {context}")
+            LLMMessage(role="user", content=f"[Context]: {context}")
         )

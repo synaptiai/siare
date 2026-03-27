@@ -204,8 +204,10 @@ class AgenticDirector:
             )
 
             if mutation is None:
-                continue
+                continue  # No valid mutation parsed, retry
 
+            # Accept first valid mutation. Future: compare against
+            # dry-run baseline when sample_tasks are provided.
             best_result = VariationResult(
                 mutation=mutation,
                 quality=None,
@@ -293,7 +295,8 @@ class AgenticDirector:
             prompt = parent_genome.rolePrompts.get(role.promptRef)
             if prompt:
                 content = prompt.content[:300]
-                parts.append(f"- {role.id}: {content}...")
+                suffix = "..." if len(prompt.content) > 300 else ""
+                parts.append(f"- {role.id}: {content}{suffix}")
 
         parts.append("\n## Performance Metrics")
         for metric_id in metrics_to_optimize:
@@ -315,13 +318,7 @@ class AgenticDirector:
         previous_result: VariationResult | None,
         iteration: int,
     ) -> str:
-        """Build a revision prompt for subsequent iterations."""
-        if previous_result and previous_result.mutation:
-            return (
-                f"Your previous mutation (iteration {iteration}) was "
-                f"accepted but let's see if you can do better. "
-                f"Consider a different approach or mutation type."
-            )
+        """Build a revision prompt when the previous attempt failed to parse."""
         return (
             f"Iteration {iteration}: Your previous response did not "
             f"contain a valid mutation. Please output a mutation in the "
@@ -440,6 +437,10 @@ class AgenticDirector:
         self, hook_name: str, ctx: HookContext, *args: Any, **kwargs: Any
     ) -> Any:
         """Fire an agentic evolution hook safely from sync context."""
+        from siare.core.hooks import HookRegistry
+
+        if HookRegistry.get_agentic_evolution_hooks() is None:
+            return None
         try:
             try:
                 loop = asyncio.get_running_loop()

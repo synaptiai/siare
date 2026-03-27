@@ -106,8 +106,8 @@ class InspectTraceTool(VariationTool):
         trace_data = self._traces[trace_id]
         if isinstance(trace_data, dict):
             data = trace_data
-        elif hasattr(trace_data, "to_dict"):
-            data = trace_data.to_dict()
+        elif hasattr(trace_data, "model_dump"):
+            data = trace_data.model_dump()
         else:
             return f"Trace '{trace_id}' has unsupported format."
 

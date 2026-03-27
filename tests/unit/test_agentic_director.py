@@ -148,7 +148,7 @@ class TestAgenticDirectorBasic:
         assert result.succeeded
         assert result.mutation is not None
         assert result.mutation.mutationType == MutationType.PROMPT_CHANGE
-        assert "specialized" in result.mutation.newConfig.version or result.mutation.rationale
+        assert "generic" in result.mutation.rationale.lower()
 
     def test_no_valid_mutation_returns_empty(self):
         """Agent fails to produce a valid mutation."""

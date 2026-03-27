@@ -1683,7 +1683,7 @@ class InnerLoopBudget(BaseModel):
         """Check if any budget dimension is exhausted."""
         return (
             self.llmCallsUsed >= self.maxLLMCalls
-            or self.dryRunsUsed >= self.maxDryRuns
+            or (self.maxDryRuns > 0 and self.dryRunsUsed >= self.maxDryRuns)
             or self.costUsed >= self.maxCostUSD
         )
 

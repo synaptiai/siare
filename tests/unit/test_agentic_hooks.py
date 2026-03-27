@@ -84,10 +84,10 @@ class TestAgenticEvolutionHooksProtocol:
 class TestHookRegistryAgentic:
     """Tests for AgenticEvolutionHooks in the HookRegistry."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _clear_hooks(self):
         HookRegistry.clear_all()
-
-    def teardown_method(self):
+        yield
         HookRegistry.clear_all()
 
     def test_default_is_none(self):
@@ -120,10 +120,10 @@ class TestHookRegistryAgentic:
 class TestFireAgenticEvolutionHook:
     """Tests for the fire_agentic_evolution_hook convenience function."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _clear_hooks(self):
         HookRegistry.clear_all()
-
-    def teardown_method(self):
+        yield
         HookRegistry.clear_all()
 
     @pytest.mark.asyncio
@@ -217,10 +217,10 @@ class TestFireAgenticEvolutionHook:
 class TestAgenticHookErrorIsolation:
     """Tests that hook errors don't break execution."""
 
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _clear_hooks(self):
         HookRegistry.clear_all()
-
-    def teardown_method(self):
+        yield
         HookRegistry.clear_all()
 
     @pytest.mark.asyncio

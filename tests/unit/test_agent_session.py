@@ -339,10 +339,66 @@ class TestAgentSessionToolSchema:
 # ============================================================================
 
 
+class TestAgentSessionResilience:
+    """Tests for LLM call failure modes."""
+
+    def test_circuit_breaker_open_raises_runtime_error(self):
+        from siare.services.circuit_breaker import CircuitBreakerOpenError
+
+        provider = MockLLMProvider(["never reached"])
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+        )
+        session.circuit_breaker.call = lambda fn: (_ for _ in ()).throw(
+            CircuitBreakerOpenError("agent_session_llm")
+        )
+
+        with pytest.raises(RuntimeError, match="circuit breaker is open"):
+            session.turn("Hello")
+
+    def test_retry_exhausted_raises_runtime_error(self):
+        from siare.services.retry_handler import RetryExhausted
+
+        provider = MockLLMProvider(["never reached"])
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+        )
+        original_call = session.circuit_breaker.call
+        session.circuit_breaker.call = lambda fn: (_ for _ in ()).throw(
+            RetryExhausted("All retries exhausted")
+        )
+
+        with pytest.raises(RuntimeError, match="retries exhausted"):
+            session.turn("Hello")
+
+    def test_tool_call_missing_name_key_ignored(self):
+        bad_response = (
+            '<tool_call>\n'
+            '{"arguments": {"trace_id": "t-1"}}\n'
+            '</tool_call>\n'
+            'Continuing with analysis.'
+        )
+        provider = MockLLMProvider([bad_response])
+        executor = MockToolExecutor()
+        session = AgentSession(
+            llm_provider=provider,
+            model="test-model",
+            system_prompt="Test",
+            tool_executor=executor,
+        )
+        result = session.turn("Analyze.")
+        assert len(executor.calls) == 0
+        assert "Continuing" in result
+
+
 class TestAgentSessionContextInjection:
     """Tests for mid-session context injection."""
 
-    def test_inject_system_context(self):
+    def test_inject_context(self):
         provider = MockLLMProvider(["OK", "Understood"])
         session = AgentSession(
             llm_provider=provider,
@@ -351,9 +407,8 @@ class TestAgentSessionContextInjection:
         )
 
         session.turn("Hello")
-        session.inject_system_context("Focus on topology mutations now.")
+        session.inject_context("Focus on topology mutations now.")
 
-        # Context appears as a user message
         messages = session.messages
         context_msg = messages[-1]
         assert context_msg.role == "user"

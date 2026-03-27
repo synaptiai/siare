@@ -300,3 +300,71 @@ class TestCompareSOPsTool:
             "sop_a_id": "a", "sop_b_id": "b",
         })
         assert "not available" in result
+
+    def test_compare_two_sops(self):
+        from siare.core.models import (
+            AggregatedMetric,
+            AggregationMethod,
+            GraphEdge,
+            ProcessConfig,
+            RoleConfig,
+            SOPGene,
+        )
+
+        config_a = ProcessConfig(
+            id="sop-a", version="1.0.0",
+            models={"m": "gpt-4"}, tools=[],
+            roles=[RoleConfig(id="retriever", model="gpt-4", promptRef="p")],
+            graph=[],
+        )
+        config_b = ProcessConfig(
+            id="sop-b", version="1.0.0",
+            models={"m": "gpt-4"}, tools=[],
+            roles=[
+                RoleConfig(id="retriever", model="gpt-4", promptRef="p"),
+                RoleConfig(id="ranker", model="gpt-4", promptRef="q"),
+            ],
+            graph=[GraphEdge(from_="retriever", to="ranker")],
+        )
+        gene_a = SOPGene(
+            sopId="sop-a", version="1.0.0",
+            promptGenomeId="g", promptGenomeVersion="1.0.0",
+            configSnapshot=config_a, evaluations=[],
+            aggregatedMetrics={"weighted_aggregate": AggregatedMetric(
+                metricId="wa", mean=0.6, median=0.6,
+                sampleSize=5, aggregationMethod=AggregationMethod.MEAN,
+            )},
+        )
+        gene_b = SOPGene(
+            sopId="sop-b", version="1.0.0",
+            promptGenomeId="g", promptGenomeVersion="1.0.0",
+            configSnapshot=config_b, evaluations=[],
+            aggregatedMetrics={"weighted_aggregate": AggregatedMetric(
+                metricId="wa", mean=0.8, median=0.8,
+                sampleSize=5, aggregationMethod=AggregationMethod.MEAN,
+            )},
+        )
+
+        class MockPool:
+            def get_sop_gene(self, sop_id, version=None):
+                if sop_id == "sop-a":
+                    return gene_a
+                return gene_b
+
+        tool = CompareSOPsTool(gene_pool=MockPool())
+        result = tool.execute({
+            "sop_a_id": "sop-a", "sop_b_id": "sop-b",
+        })
+        assert "Roles added" in result
+        assert "ranker" in result
+        assert "0.600" in result
+        assert "0.800" in result
+
+    def test_sop_not_found(self):
+        class MockPool:
+            def get_sop_gene(self, sop_id, version=None):
+                return None
+
+        tool = CompareSOPsTool(gene_pool=MockPool())
+        result = tool.execute({"sop_a_id": "x", "sop_b_id": "y"})
+        assert "not found" in result

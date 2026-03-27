@@ -197,12 +197,47 @@ class SupervisorAgent:
         self,
         recent_genes: list[dict[str, Any]],
     ) -> dict[str, float]:
-        """Compute success rates per mutation type from recent genes.
+        """Compute improvement rate from recent genes.
 
-        A placeholder — full implementation would track which mutations
-        led to quality improvements. Returns empty dict for now.
+        Compares each gene's quality against its parent to determine
+        how often offspring improved. Returns a single "improvement_rate"
+        key since mutation type is not tracked per gene.
         """
-        return {}
+        if len(recent_genes) < 2:
+            return {}
+
+        improvements = 0
+        comparisons = 0
+
+        for gene_data in recent_genes:
+            sop_id = gene_data.get("sopId", "")
+            version = gene_data.get("version", "")
+            quality = gene_data.get("quality", 0.0)
+
+            try:
+                gene = self.gene_pool.get_sop_gene(sop_id, version)
+                if gene is None or gene.parent is None:
+                    continue
+
+                parent = self.gene_pool.get_sop_gene(
+                    gene.parent.get("sopId", ""),
+                    gene.parent.get("version"),
+                )
+                if parent is None:
+                    continue
+
+                parent_quality = parent.get_metric_mean("weighted_aggregate")
+                if quality > parent_quality:
+                    improvements += 1
+                comparisons += 1
+            except Exception as e:
+                logger.debug("Failed to compute success for %s: %s", sop_id, e)
+                continue
+
+        if comparisons == 0:
+            return {}
+
+        return {"improvement_rate": improvements / comparisons}
 
     def _build_analysis_prompt(
         self,
