@@ -76,3 +76,5 @@ siare.yaml
 example_docs/
 *.log
 TODO.md
+.claude/worktrees/
+docs/plans/
