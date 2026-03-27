@@ -68,6 +68,7 @@ class AgentSession:
         circuit_breaker: CircuitBreaker | None = None,
         max_tool_rounds: int = 5,
         temperature: float = 0.5,
+        max_messages: int = 50,
     ) -> None:
         self.llm_provider = llm_provider
         self.model = model
@@ -81,6 +82,7 @@ class AgentSession:
         )
         self.max_tool_rounds = max_tool_rounds
         self.temperature = temperature
+        self.max_messages = max_messages
 
         self._messages: list[LLMMessage] = [
             LLMMessage(role="system", content=system_prompt),
@@ -96,6 +98,15 @@ class AgentSession:
     def tool_calls_made(self) -> list[dict[str, Any]]:
         """Record of all tool calls made in this session."""
         return list(self._tool_calls_made)
+
+    def _prune_messages(self) -> None:
+        """Keep system prompt + last max_messages messages."""
+        if len(self._messages) <= self.max_messages:
+            return
+        # Always keep the first message (system prompt)
+        system_msg = self._messages[0]
+        # Keep the last (max_messages - 1) messages
+        self._messages = [system_msg] + self._messages[-(self.max_messages - 1):]
 
     def turn(self, user_message: str) -> str:
         """Execute one conversational turn.
@@ -113,6 +124,7 @@ class AgentSession:
         Raises:
             RuntimeError: If the circuit breaker is open or retries exhausted.
         """
+        self._prune_messages()
         self._messages.append(LLMMessage(role="user", content=user_message))
 
         for _round in range(self.max_tool_rounds):
