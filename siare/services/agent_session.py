@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from siare.core.models import InnerLoopBudget, VariationToolSpec
 from siare.services.circuit_breaker import CircuitBreaker
@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+@runtime_checkable
 class ToolExecutor(Protocol):
     """Interface for executing a variation tool by name."""
 
