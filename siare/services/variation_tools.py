@@ -258,7 +258,9 @@ class QueryGenePoolTool(VariationTool):
 
         try:
             if query_type == "pareto_frontier":
-                frontier = self._gene_pool.get_pareto_frontier()
+                frontier = self._gene_pool.get_pareto_frontier(
+                    metric_ids=["weighted_aggregate"]
+                )
                 items = [
                     {
                         "sopId": g.sopId,

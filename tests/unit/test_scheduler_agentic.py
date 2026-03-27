@@ -29,6 +29,7 @@ class TestAgenticModeSelection:
         scheduler._supervisor = None
         scheduler._current_directive = None
         scheduler._redirections_this_phase = 0
+        scheduler._redirection_cooldown = 0
         scheduler._using_agentic_mode = False
         return scheduler
 
@@ -94,6 +95,7 @@ class TestStagnationHandling:
         scheduler._agentic_director = MagicMock()
         scheduler._current_directive = None
         scheduler._redirections_this_phase = 0
+        scheduler._redirection_cooldown = 0
         scheduler._using_agentic_mode = False
         scheduler.best_quality_history = quality_history
         scheduler.convergence_config = ConvergenceConfig(
@@ -136,6 +138,17 @@ class TestStagnationHandling:
         scheduler = self._make_scheduler([0.65, 0.65])
         assert not scheduler._check_and_handle_stagnation()
 
+    def test_cooldown_prevents_rapid_supervisor_calls(self):
+        scheduler = self._make_scheduler([0.5, 0.65, 0.65, 0.65, 0.65])
+        # First call triggers supervisor
+        assert scheduler._check_and_handle_stagnation() is True
+        assert scheduler._redirection_cooldown == 3  # convergence_window
+        # Second call is blocked by cooldown
+        assert scheduler._check_and_handle_stagnation() is False
+        assert scheduler._redirection_cooldown == 2  # decremented
+        # Supervisor only called once
+        scheduler._supervisor.analyze_and_redirect.assert_called_once()
+
 
 # ============================================================================
 # Phase Transition Tests
@@ -168,6 +181,7 @@ class TestPhaseTransitionAgentic:
             rationale="old",
         )
         scheduler._redirections_this_phase = 2
+        scheduler._redirection_cooldown = 1
 
         job = EvolutionJob(
             id="test",
@@ -206,6 +220,7 @@ class TestPhaseTransitionAgentic:
 
         assert job.currentPhaseIndex == 1
         assert scheduler._redirections_this_phase == 0
+        assert scheduler._redirection_cooldown == 0
         assert scheduler._current_directive is None
         assert scheduler._using_agentic_mode is False
 

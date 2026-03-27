@@ -1834,12 +1834,6 @@ class AgenticVariationConfig(BaseModel):
         ge=1,
         description="Max diagnose-propose-dryrun cycles per variation",
     )
-    improvementThreshold: float = Field(
-        default=0.02,
-        ge=0.0,
-        le=1.0,
-        description="Min quality improvement to accept a mutation",
-    )
     innerBudget: InnerLoopBudget = Field(
         default_factory=InnerLoopBudget,
         description="Budget for each inner agentic loop",

@@ -258,7 +258,6 @@ class TestAgenticVariationConfig:
         config = AgenticVariationConfig()
         assert config.mode == "adaptive"
         assert config.maxInnerIterations == 5
-        assert config.improvementThreshold == 0.02
         assert config.enableSupervisor
         assert config.enableKnowledgeBase
         assert config.persistRunSummaries
@@ -283,8 +282,6 @@ class TestAgenticVariationConfig:
         assert config.innerBudget.maxDryRuns == 10
 
     def test_validation_thresholds(self):
-        with pytest.raises(ValueError):
-            AgenticVariationConfig(improvementThreshold=1.5)
         with pytest.raises(ValueError):
             AgenticVariationConfig(maxInnerIterations=0)
 

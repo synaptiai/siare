@@ -149,7 +149,9 @@ class SupervisorAgent:
             logger.warning("Failed to get QD visit stats: %s", e)
 
         try:
-            frontier = self.gene_pool.get_pareto_frontier()
+            frontier = self.gene_pool.get_pareto_frontier(
+                metric_ids=["weighted_aggregate"]
+            )
             pareto_frontier = [
                 {
                     "sopId": g.sopId,

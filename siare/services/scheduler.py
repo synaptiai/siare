@@ -114,6 +114,7 @@ class EvolutionScheduler:
         self._current_directive: SupervisorDirective | None = None
         self._redirections_this_phase = 0
         self._using_agentic_mode = False
+        self._redirection_cooldown = 0  # Generations to skip before next stagnation check
 
         if agentic_config:
             self._init_agentic_components(agentic_config)
@@ -972,6 +973,11 @@ class EvolutionScheduler:
         if self._supervisor is None or self.agentic_config is None:
             return False
 
+        # Cooldown: give the directive time to take effect
+        if self._redirection_cooldown > 0:
+            self._redirection_cooldown -= 1
+            return False
+
         max_redirections = self.agentic_config.maxRedirectionsPerPhase
         if self._redirections_this_phase >= max_redirections:
             return False
@@ -1005,6 +1011,7 @@ class EvolutionScheduler:
 
         self._current_directive = directive
         self._redirections_this_phase += 1
+        self._redirection_cooldown = conv.convergence_window
         self._using_agentic_mode = True
 
         logger.info(
@@ -1038,6 +1045,10 @@ class EvolutionScheduler:
         )
         if not parent_genome:
             logger.error("Parent genome not found")
+            return None
+
+        if self._agentic_director is None:
+            logger.error("Agentic director not initialized")
             return None
 
         result = self._agentic_director.vary(
@@ -1693,6 +1704,7 @@ class EvolutionScheduler:
         if job.currentPhaseIndex < len(job.phases) - 1:
             job.currentPhaseIndex += 1
             self._redirections_this_phase = 0
+            self._redirection_cooldown = 0
             self._current_directive = None
             if self.agentic_config and self.agentic_config.mode == "adaptive":
                 self._using_agentic_mode = False

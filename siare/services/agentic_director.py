@@ -300,8 +300,11 @@ class AgenticDirector:
 
         parts.append("\n## Performance Metrics")
         for metric_id in metrics_to_optimize:
-            mean = parent_gene.get_metric_mean(metric_id)
-            parts.append(f"- {metric_id}: {mean:.3f}")
+            if metric_id in parent_gene.aggregatedMetrics:
+                mean = parent_gene.get_metric_mean(metric_id)
+                parts.append(f"- {metric_id}: {mean:.3f}")
+            else:
+                parts.append(f"- {metric_id}: (not evaluated)")
 
         quality = parent_gene.get_metric_mean("weighted_aggregate")
         parts.append(f"\nOverall quality: {quality:.3f}")
