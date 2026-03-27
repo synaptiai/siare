@@ -17,12 +17,9 @@ from siare.core.models import InnerLoopBudget, VariationToolSpec
 from siare.services.agent_session import ToolExecutor
 
 if TYPE_CHECKING:
-    from siare.services.evaluation_service import EvaluationService
-    from siare.services.execution_engine import ExecutionEngine, ExecutionTrace
+    from siare.services.execution_engine import ExecutionEngine
     from siare.services.gene_pool import GenePool
     from siare.services.knowledge_base import KnowledgeBase
-    from siare.services.llm_provider import LLMProvider
-    from siare.services.qd_grid import QDGridManager
 
 logger = logging.getLogger(__name__)
 

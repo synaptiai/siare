@@ -14,7 +14,6 @@ the scheduler chooses which to use based on AgenticVariationConfig.mode.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -22,11 +21,9 @@ from typing import TYPE_CHECKING, Any
 from siare.core.hooks import HookContext, fire_agentic_evolution_hook
 from siare.core.models import (
     AgenticVariationConfig,
-    InnerLoopBudget,
     MutationType,
     ProcessConfig,
     PromptGenome,
-    RoleConfig,
     SOPGene,
     SOPMutation,
     SupervisorDirective,
@@ -34,17 +31,11 @@ from siare.core.models import (
 )
 from siare.services.agent_session import AgentSession
 from siare.services.circuit_breaker import CircuitBreaker
-from siare.services.llm_provider import LLMMessage
 from siare.services.retry_handler import RetryHandler
 from siare.services.variation_tools import VariationToolRegistry
 
 if TYPE_CHECKING:
-    from siare.services.evaluation_service import EvaluationService
-    from siare.services.execution_engine import ExecutionEngine
-    from siare.services.gene_pool import GenePool
-    from siare.services.knowledge_base import KnowledgeBase
     from siare.services.llm_provider import LLMProvider
-    from siare.services.qd_grid import QDGridManager
 
 logger = logging.getLogger(__name__)
 
