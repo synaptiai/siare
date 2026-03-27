@@ -176,7 +176,20 @@ class EvolutionScheduler:
             try:
                 loop = asyncio.get_running_loop()
                 # We're in an async context - create task but don't await
-                loop.create_task(fire_evolution_hook(hook_name, ctx, *args, **kwargs))
+                task = loop.create_task(
+                    fire_evolution_hook(hook_name, ctx, *args, **kwargs)
+                )
+                task.add_done_callback(
+                    lambda t: (
+                        logger.warning(
+                            "Hook %s failed: %s",
+                            hook_name,
+                            t.exception(),
+                        )
+                        if not t.cancelled() and t.exception()
+                        else None
+                    )
+                )
                 return None
             except RuntimeError:
                 # No running loop - create new one for sync context

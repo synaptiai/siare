@@ -449,9 +449,20 @@ class AgenticDirector:
         try:
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(
+                task = loop.create_task(
                     fire_agentic_evolution_hook(
                         hook_name, ctx, *args, **kwargs
+                    )
+                )
+                task.add_done_callback(
+                    lambda t: (
+                        logger.warning(
+                            "Agentic hook %s failed: %s",
+                            hook_name,
+                            t.exception(),
+                        )
+                        if not t.cancelled() and t.exception()
+                        else None
                     )
                 )
                 return None
