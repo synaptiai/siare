@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "siare"
-version = "1.0.0"
+version = "1.2.0"
 description = "Self-Improving Agentic RAG Engine - Evolve multi-agent RAG pipelines using Quality-Diversity optimization"
 readme = "README.md"
 license = "MIT"

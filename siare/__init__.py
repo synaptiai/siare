@@ -50,7 +50,7 @@ from siare.core.models import (
     VariationResult,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.2.0"
 __author__ = "Daniel Bentes"
 __license__ = "MIT"
 
