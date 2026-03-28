@@ -23,6 +23,7 @@ Welcome to the SIARE (Self-Improving Agentic RAG Engine) documentation.
 | Add custom metrics, tools, constraints | [Custom Extensions](guides/custom-extensions.md) |
 | Write effective multi-agent prompts | [Prompt Engineering](guides/prompt-engineering.md) |
 | Implement domain use cases | [Use Cases](guides/USE_CASES.md) |
+| Run benchmarks and comparisons | [Benchmarks](guides/benchmarks.md) |
 
 ## Architecture
 
@@ -53,7 +54,8 @@ docs/
 │   ├── first-custom-pipeline.md   # Customize for your domain
 │   ├── custom-extensions.md       # Add metrics, tools, constraints
 │   ├── prompt-engineering.md      # Effective multi-agent prompts
-│   └── USE_CASES.md               # Domain implementation patterns
+│   ├── USE_CASES.md               # Domain implementation patterns
+│   └── benchmarks.md             # Running benchmarks and comparisons
 │
 ├── Architecture
 │   ├── SYSTEM_ARCHITECTURE.md     # System design
@@ -82,7 +84,7 @@ siare evolve --generations 10
 siare run "Your query here"
 
 # Python library usage (open-source)
-from siare.services import DirectorService, GenePool, ExecutionEngine
+from siare.services import DirectorService, AgenticDirector, GenePool, ExecutionEngine
 ```
 
 ## Quick Links

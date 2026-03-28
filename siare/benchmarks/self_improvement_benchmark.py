@@ -114,6 +114,8 @@ class SelfImprovementConfig:
     )
     # Reproducibility - set to any integer for deterministic benchmark runs
     random_seed: int | None = None
+    # Agentic variation config (None = single_turn default behavior)
+    agentic_config: Any | None = None  # AgenticVariationConfig when set
 
 
 @dataclass
@@ -143,6 +145,7 @@ class GenerationSnapshot:
     prompt_changes: list[dict[str, Any]]
     timestamp: str | float = 0.0  # ISO format string or float timestamp
     offspring_details: list[dict[str, Any]] = field(default_factory=list)
+    agentic_stats: dict[str, Any] | None = None
 
 
 @dataclass
@@ -196,6 +199,22 @@ class SelfImprovementResult:
                 "p_value": test.pValue if test else None,
             }
 
+        agentic_summary = None
+        if self.config.agentic_config:
+            agentic_gens = [
+                s for s in self.generation_snapshots if s.agentic_stats
+            ]
+            total_inner = sum(
+                s.agentic_stats.get("total_inner_iterations", 0)
+                for s in agentic_gens
+                if s.agentic_stats
+            )
+            agentic_summary = {
+                "mode": getattr(self.config.agentic_config, "mode", "unknown"),
+                "generations_using_agentic": len(agentic_gens),
+                "total_inner_iterations": total_inner,
+            }
+
         return {
             "dataset": self.dataset_name,
             "model": self.config.model,
@@ -205,6 +224,7 @@ class SelfImprovementResult:
             "convergence_generation": self.convergence_generation,
             "total_time_seconds": self.total_time_seconds,
             "prompt_changes": len([d for d in self.prompt_diffs.values() if d]),
+            "agentic": agentic_summary,
         }
 
 
@@ -641,6 +661,7 @@ class SelfImprovementBenchmark:
             director_service=self._director_service,
             convergence_config=convergence_config,
             parallel_offspring=self._config.parallel_offspring,
+            agentic_config=self._config.agentic_config,
         )
 
     def _create_evolution_job(
