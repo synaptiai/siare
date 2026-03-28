@@ -249,7 +249,7 @@ class AgenticComparisonReport:
         row = "| Improvement % |"
         for mode in self._modes:
             pct = self._best_improvement_pct(mode)
-            row += f" +{pct:.1f}% |" if pct is not None else " N/A |"
+            row += f" {pct:+.1f}% |" if pct is not None else " N/A |"
         rows.append(row)
 
         # Convergence generation
@@ -283,12 +283,12 @@ class AgenticComparisonReport:
         improvements = self._results[mode].get("improvements", {})
         if not improvements:
             return None
-        # Pick the metric with the highest final value
+        # Pick the metric with the highest evolved value
         best: float | None = None
         for metric_data in improvements.values():
-            final = metric_data.get("final")
-            if final is not None and (best is None or final > best):
-                best = final
+            evolved = metric_data.get("evolved")
+            if evolved is not None and (best is None or evolved > best):
+                best = evolved
         return best
 
     def _best_improvement_pct(self, mode: str) -> float | None:

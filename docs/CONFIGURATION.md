@@ -328,7 +328,7 @@ Configure the hybrid agentic variation system. When enabled, the evolution loop 
 agentic_evolution:
   mode: "adaptive"           # single_turn | agentic | adaptive
   max_inner_iterations: 5    # Max diagnose-propose-validate cycles
-  agent_model: "gpt-4o"     # LLM for AgenticDirector and Supervisor
+  agent_model: "gpt-5"      # LLM for AgenticDirector and Supervisor
   enable_supervisor: true    # Activate supervisor on stagnation
   max_redirections_per_phase: 3  # Max supervisor interventions per phase
   enable_knowledge_base: true    # Domain knowledge for variation tools

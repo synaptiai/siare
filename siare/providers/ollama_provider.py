@@ -25,7 +25,7 @@ class OllamaProvider(LLMProvider):
 
     def __init__(
         self,
-        model: str = "llama3.2:7b",
+        model: str = "llama3.2:3b",
         base_url: str | None = None,
         timeout: float = 120.0,
     ) -> None:
@@ -67,8 +67,11 @@ class OllamaProvider(LLMProvider):
             )
             resp.raise_for_status()
             data = resp.json()
-        except requests.RequestException as e:
-            raise RuntimeError(f"Ollama API error: {e}") from e
+        except (requests.RequestException, ValueError) as e:
+            raise RuntimeError(
+                f"Ollama API call failed for model "
+                f"{model or self.default_model}"
+            ) from e
 
         content = data.get("message", {}).get("content", "")
         prompt_tokens = data.get("prompt_eval_count", 0)
@@ -82,7 +85,7 @@ class OllamaProvider(LLMProvider):
                 "completion_tokens": completion_tokens,
                 "total_tokens": prompt_tokens + completion_tokens,
             },
-            finish_reason="stop",
+            finish_reason=data.get("done_reason", "stop"),
             raw_response=data,
             cost=0.0,  # Local models are free
         )

@@ -412,10 +412,12 @@ Examples:
             AgenticComparisonReport,
         )
 
-        report = AgenticComparisonReport(mode_results)
-        md_path = output_dir / f"agentic_comparison_{timestamp}.md"
-        report.save_markdown(md_path)
-        logger.info(f"Markdown report: {md_path}")
+        mode_configs_dict = {
+            mode: {"mode": mode} for mode in mode_summaries
+        }
+        report = AgenticComparisonReport(mode_summaries, mode_configs_dict)
+        report.save(str(output_dir))
+        logger.info(f"Comparison report saved to: {output_dir}")
     except ImportError:
         logger.warning(
             "AgenticComparisonReport not available; skipping markdown report."
